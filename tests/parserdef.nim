@@ -8,16 +8,21 @@ make(id=Parser, toplevel=expression):
             arith_expr
         arith_expr:
             term *(OP1 term)
+        term:
+            atom_expr *(OP2 atom_expr)
         atom_expr:
             atom *trailer
+        trailer:
+            r"\(" [expression] r"\)"
         atom:
             NAME
-            NUMBER
+            INT
             r"nil"
             r"false"
             r"true"
     lexer:
         r"[\+\-]": OP1
+        r"[\*/]": OP2
         r"[a-zA-Z_][a-zA-z_0-9]*": NAME
         r"[1-9][0-9]*": INT
         r"("").*("")": STRING

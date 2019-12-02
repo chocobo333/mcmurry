@@ -20,3 +20,4 @@ test "lex":
     #         break
     for e in parser.lex("aa b+b\n    cc dd\n    ee ff\ngg hh"):
         echo e
+         

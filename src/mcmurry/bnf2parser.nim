@@ -584,7 +584,7 @@ proc parseRule(grammer: NimNode, toplevel: NimNode, id: NimNode): seq[NimNode] =
                 for nr, rule in rules:
                     if rule.left == item.left and rule.right == item.right:
                         for key in item.la:
-                            # if there is shift/reduce confict, raise error
+                            # if there is shift/reduce conflict, raise error
                             if key in lrtable[nn]:
                                 for a in grammer.findChildren(nnkIdent):
                                     if $a == item.left:
@@ -665,7 +665,6 @@ macro MakeParser*(id: untyped, toplevel: untyped, grammer: untyped): untyped =
     # echo treeRepr(grammer)
     if dbCode in DebugFlags:
         echo repr(result)
-    echo repr(result)
 
 let rean = re"a[0-9]+"
 
@@ -690,31 +689,32 @@ proc remove_annon(self: var NodeBase): NodeBase {.discardable.} =
     
 
 when isMainModule:
-    MakeParser(id=parser, toplevel=addexpr):
-        addexpr:
-            term
-            a0 term
+    MakeParser(id=parser, toplevel=expression):
+        expression: arith_expr 
+        annon0:
+            OP1 term
+            annon0 OP1 term 
+        arith_expr:
+            term annon0
+            term 
+        annon1:
+            OP2 atom_expr
+            annon1 OP2 atom_expr 
         term:
-            atomexpr
-            atomexpr a1
-        a0:
-            term OP1
-            a0 term OP1
-        a1:
-            OP2 atomexpr
-            a1 OP2 atomexpr
-        atomexpr:
-            atom
-            atom a2
-        trailer:
-            PL atom PR
-        a2:
+            atom_expr annon1
+            atom_expr 
+        annon2:
             trailer
-            a2 trailer
+            annon2 trailer 
+        atom_expr:
+            atom annon2
+            atom
+        trailer:
+            PL expression PR
+            PL PR
         atom:
-            INT
             NAME
-            STRING
+            INT
         r"[a-zA-Z_][a-zA-z_0-9]*": NAME
         r"[1-9][0-9]*": INT
         r"("").*("")": STRING

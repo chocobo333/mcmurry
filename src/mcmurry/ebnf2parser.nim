@@ -1,6 +1,7 @@
 
 import macros
 
+from sequtils import map
 from strutils import `%`, escape, splitLines, center, replace, parseInt, startsWith
 import re
 import tables
@@ -26,7 +27,7 @@ proc find_annon_and_nodekind(body: var NimNode): (seq[NimNode], seq[NimNode]) =
         if top.kind == nnkRStrLit:
             result[0].uadd top
         elif top.kind == nnkStrLit:
-            error "Use raw string instead.; r\"$1\"." % @[$top], top
+            error "Use raw string instead.; r\"$1\"." % [$top], top
         elif top.kind == nnkIdent:
             if not ($top).isUpper(true) and not ($top in @["|", "*", "+"]):
                 result[1].uadd top
@@ -61,7 +62,7 @@ proc typedef(tkid, tid: NimNode, annons, tokens: seq[NimNode], nkid, nid: NimNod
     tks.add ident"EOF"
     nks.insert newEmptyNode(), 0
     for i in 0..<annons.len:
-        tks.add ident("ANNON$1" % @[$i])
+        tks.add ident("ANNON$1" % [$i])
     # tokenkind
     typsec.add nnkTypeDef.newTree(
         nnkPragmaExpr.newTree(
@@ -137,17 +138,17 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
             reinit.add nnkAsgn.newTree(e[0][0], e[0][2])
         of nnkCall:
             if e[0].kind == nnkStrLit:
-                error "Use raw string; r\"$1\"." % @[$e[0]], e
+                error "Use raw string; r\"$1\"." % [$e[0]], e
             e[0].expectKind(nnkRStrLit)
             e[1].expectKind(nnkStmtList)
             rstrs.add (e[0], e[1][0])
         of nnkPrefix:
             e[0].expectKind(nnkIdent)
             if $e[0] != directive_signature:
-                error "Directive must start with \"$1\"" % @[directive_signature], e[0]
+                error "Directive must start with \"$1\"" % [directive_signature], e[0]
             e[1].expectKind(nnkIdent)
             if $e[1] notin directive_commands:
-                error "Directive must be one of $1" % @[$directive_commands], e[1]
+                error "Directive must be one of $1" % [$directive_commands], e[1]
             e[2].expectKind(nnkStmtList)
             for id in e[2]:
                 id.expectKind(nnkIdent)
@@ -308,20 +309,63 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
                 if ret.kind == `tkid`.EOF:
                     break
 
+proc check_rule_structure(n: NimNode, rules, tokens: seq[string]) =
+    case n.kind
+    of nnkIdent:
+        if isUpper($n, true):
+            if $n notin tokens:
+                error "Undefined token.", n
+        elif not ($n).replace("_", "").isLower(true):
+                error "Invalid name of rule"
+        else:
+            if $n notin rules:
+                error "Undefined rule.", n
+        return
+    of nnkRStrLit:
+        return
+    of nnkPrefix:
+        case $n[0]
+        of "*", "+":
+            check_rule_structure(n[1], rules, tokens)
+            return
+        else:
+            error "Allowed prefix operators are only '+' and '*'.", n
+    of nnkBracket:
+        for e in n:
+            check_rule_structure(e, rules, tokens)
+    of nnkCommand:
+        for e in n:
+            check_rule_structure(e, rules, tokens)
+    of nnkPar:
+        for e in n:
+            check_rule_structure(e, rules, tokens)
+    else:
+        error "Invalid rule. " & $n.kind, n
+
+proc rewrite_annon(body: NimNode, annons: seq[NimNode]) =
+    for j, e in body:
+        if e.kind == nnkRStrLit:
+            for i, annon in annons:
+                if $e == $annon:
+                    body[j] = ident("ANNON" & $i)
+        else:
+            rewrite_annon(e, annons)
+
+# FIXME: implementation like @check_rule_structure.
 proc parse_rule(body: NimNode, annons: seq[Nimnode], reset: int = 0): seq[Rule] =
     body.expectKind(nnkCall)
     var
+        body = body
         nannon = reset
         left = $body[0]
+    rewrite_annon(body, annons)
     for e in body[1]:
-        
         var
             ret = @[Rule(left: left)]
             rep = repr(e)
             tmp: string
             i = 0
             c = rep[i]
-        echo rep
         proc p() =
             if c.isAlpha:
                 tmp = ""
@@ -333,9 +377,10 @@ proc parse_rule(body: NimNode, annons: seq[Nimnode], reset: int = 0): seq[Rule] 
                             ee.right.add tmp
                     return
                 c = rep[i]
-                while c.isAlpha:
+                while c.isAlnum or c == '_':
                     tmp.add c
                     i += 1
+
                     if i >= rep.len:
                         break
                     c = rep[i]
@@ -413,10 +458,46 @@ proc def_parser(ids: seq[NimNode], toplevel, body: NimNode, annons: seq[NimNode]
     body.expectKind(nnkStmtList)
 
     # checking structure of body
-
-    # parse rules
+    var
+        rulenames: seq[string]
     for e in body:
-        discard parse_rule(e, annons)
+        case e.kind
+        of nnkCall:
+            if isUpper($e[0], true):
+                error "Upper case string is defined as token in Lexer section.", e
+            elif not ($e[0]).replace("_", "").isLower(true):
+                error "Invalid name of rule"
+
+            rulenames.uadd $e[0]
+        else:
+            error "Invalid structure.", e
+    for e in body:
+        for ee in e[1]:
+            check_rule_structure(ee, rulenames, tokens.map(proc (self: auto): string = $self))
+
+
+    # parses rules
+    var
+        nannon = 0
+        rules: seq[Rule]
+        annonrules: seq[Rule]
+    for e in body:
+        for rule in parse_rule(e, annons, nannon):
+            if rule.left.startsWith("annon"):
+                if rule.right[0] != rule.left:
+                    nannon += 1
+                    for r in annonrules:
+                        if r.right == rule.right:
+                            error "If you want to use a same pattern twice or more, you can make a new rule instead.", e
+                    annonrules.add rule
+            rules.add rule
+
+    # TODO: implement expansion of lr item set.
+    var
+        dfa = makeDFA(rules, toplevel)
+    # echo rules
+    # echo dfa
+    echo dfa.table
 
 macro make*(id, toplevel, body: untyped): untyped =
     result = nnkStmtList.newNimNode()
@@ -459,12 +540,10 @@ when isMainModule:
             expression: arith_expr
             cond_expr: expression r"\?" expression r":" expression
             arith_expr: *(term OP1) term
-            term: *(atom_expr OP2) atom_expr
-            atom_expr:
-                atom *trailer
+            term: *(atom OP2) atom
             atom:
                 NAME
-                NUMBER
+                INT
                 r"nil"
                 r"false"
                 r"true"

@@ -13,3 +13,4 @@ skipDirs = @["tmp"]
 
 requires "nim >= 1.0.0"
 requires "asciitype"
+requires "coloredString"
