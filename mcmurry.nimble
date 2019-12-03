@@ -2,7 +2,7 @@
 
 version       = "0.1.0"
 author        = "chocobo333"
-description   = "lexer and parser."
+description   = "A module for generating lexer/parser."
 license       = "MIT"
 srcDir        = "src"
 skipDirs = @["tmp"]

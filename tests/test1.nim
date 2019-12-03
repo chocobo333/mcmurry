@@ -1,6 +1,3 @@
-##[
-    This module provides ebnf lexer/parser generator in pure nim.
-]##
 
 import unittest
 
