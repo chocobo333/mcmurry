@@ -1,7 +1,7 @@
 
 import macros
 
-from sequtils import map
+from sequtils import map, insert
 from strutils import `%`, escape, splitLines, center, replace, parseInt, startsWith
 import re
 import tables
@@ -11,7 +11,6 @@ import private/utils
 import private/lr_dfa
 
 export core.`$`
-
 
 type
     TokenError* = object of Exception
@@ -24,12 +23,15 @@ proc find_annon_and_nodekind(body: var NimNode): (seq[NimNode], seq[NimNode]) =
         top: NimNode
     while l != @[]:
         top = l.pop()
+        # FIXME: using re, make pattern not allow empty.
         if top.kind == nnkRStrLit:
             result[0].uadd top
         elif top.kind == nnkStrLit:
             error "Use raw string instead.; r\"$1\"." % [$top], top
         elif top.kind == nnkIdent:
-            if not ($top).isUpper(true) and not ($top in @["|", "*", "+"]):
+            if ($top).startsWith("annon"):
+                error "Rule's name must not start with `annon`.", top
+            if not ($top).isUpper(true) and not ($top in @["*", "+"]):
                 result[1].uadd top
         for e in top:
             l.add e
@@ -44,6 +46,8 @@ proc find_token_and_rstr(body: NimNode): seq[NimNode] =
     while stack != @[]:
         top = stack.pop()
         if top.kind == nnkIdent:
+            if ($top).startsWith("ANNON"):
+                error "Token's name must not start with `ANNON`.", top
             if ($top).isUpper(true):
                 result.uadd top
         for e in top:
@@ -102,7 +106,7 @@ proc typedef(tkid, tid: NimNode, annons, tokens: seq[NimNode], nkid, nid: NimNod
                 newEmptyNode(),
                 newEmptyNode(),
                 nnkRecList.newTree(
-                    newIdentDefs(ident"stack", nnkBracketExpr.newTree(bindSym"seq", bindSym"int")),
+                    # newIdentDefs(ident"stack", nnkBracketExpr.newTree(bindSym"seq", bindSym"int")),
                     newIdentDefs(ident"program", bindSym"string"),
                     newIdentDefs(ident"i", bindSym"int"),
                     newIdentDefs(ident"pos", nnkPar.newTree(bindSym"int", bindSym"int"))
@@ -164,6 +168,7 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
         # TODO: implement pure re
         # if match("", re($e[0])):
         #     error "Lexer does not allowed regular expression that empty string matches.", e[0]
+        # FIXME: using re, make pattern not allow empty.
         letsec.add nnkIdentDefs.newTree(ident("re" & $pid & $i), newEmptyNode(), nnkCallStrLit.newTree(bindSym"re", e[0]))
     for i, e in annons:
         # TODO: implement pure re
@@ -497,7 +502,130 @@ proc def_parser(ids: seq[NimNode], toplevel, body: NimNode, annons: seq[NimNode]
         dfa = makeDFA(rules, toplevel)
     # echo rules
     # echo dfa
-    echo dfa.table
+    # echo dfa.table
+    var
+        self = ident"self"
+        src = ident"src"
+        # cur_state = ident"cur_state"
+        stack = ident"stack"
+        token_stack = ident"token_stack"
+        ret_stack = ident"ret_stack"
+        state_case = nnkCaseStmt.newTree(nnkBracketExpr.newTree(stack, prefix(newLit(1), "^")))
+        tk = ident"tk"
+        t = ident"t"
+        tmpt = ident"tmpt"
+    result = newProc(postfix(ident"parse", "*"), [nid, newIdentDefs(ident"self", pid), newIdentDefs(ident"src", bindSym"string")])
+    result.body = newStmtList()
+    result.body.add nnkVarSection.newTree(
+        # newIdentDefs(cur_state, bindSym"int"),
+        newIdentDefs(stack, nnkBracketExpr.newTree(bindSym"seq", bindSym("int")), newLit(@[0])),
+        newIdentDefs(token_stack, newCall("type", newDotExpr(ident"result", ident"tokens"))),
+        newIdentDefs(ret_stack, newCall("type", newDotExpr(ident"result", ident"children")))
+    )
+    for i, table in dfa.table:
+        var
+            t_case = nnkCaseStmt.newTree(t)
+        for key in table.keys:
+            var
+                op = table[key]
+                stmtlist = newStmtList()
+            case op.op
+            of ACC:
+                stmtlist.add nnkBreakStmt.newTree(newEmptyNode())
+            of SHIFT:
+                stmtlist.add newCall(newDotExpr(stack, bindSym"add"), newLit(op.val))
+                stmtlist.add newCall(newDotExpr(token_stack, bindSym"add"), tk)
+                stmtlist.add nnkBreakStmt.newTree(newEmptyNode())
+            # TODO: implement case t of REDUCE:
+            of REDUCE:
+                var
+                    rule: Rule = rules[op.val]
+                stmtlist.add nnkAsgn.newTree(
+                    ident"result",
+                    newCall(nid)
+                )
+                for i in countdown(rule.right.len-1, 0):
+                    var
+                        e = rule.right[i]
+                    stmtlist.add nnkDiscardStmt.newTree(newCall(newDotExpr(stack, bindSym"pop")))
+                    if e.isUpper(true):
+                        stmtlist.add newCall(newDotExpr(newDotExpr(ident"result", ident"tokens"), bindSym"insert"), newDotExpr(token_stack, bindSym"pop"), newLit(0))
+                    elif e.startsWith("annon"):
+                        stmtlist.add nnkVarSection.newTree(
+                            newIdentDefs(ident"tmpannon", newEmptyNode(), newDotExpr(ret_stack, bindSym"pop"))
+                        )
+                        stmtlist.add newCall(newDotExpr(newDotExpr(ident"result", ident"children"), bindSym"insert"), newDotExpr(ident"tmpannon", ident"children"), newLit(0))
+                        stmtlist.add newCall(newDotExpr(newDotExpr(ident"result", ident"tokens"), bindSym"insert"), newDotExpr(ident"tmpannon", ident"tokens"), newLit(0))
+                    else:
+                        stmtlist.add newCall(newDotExpr(newDotExpr(ident"result", ident"children"), bindSym"insert"), newDotExpr(ret_stack, bindSym"pop"), newLit(0))
+                if rule.left.startsWith("annon"):
+                    discard
+                else:
+                    stmtlist.add nnkAsgn.newTree(
+                        newDotExpr(ident"result", ident"kind"),
+                        ident(rule.left)
+                    )
+                stmtlist.add newCall(newDotExpr(ret_stack, bindSym"add"), ident"result")
+                stmtlist.add nnkAsgn.newTree(
+                    tmpt, 
+                    t
+                )
+                stmtlist.add nnkAsgn.newTree(
+                    t, 
+                    newLit(rule.left)
+                )
+                # stmtlist.add newCall("echo", newLit(rule.left), newLit(rule.right.len))
+            of GOTO:
+                stmtlist.add newCall(newDotExpr(stack, bindSym"add"), newLit(op.val))
+                stmtlist.add nnkAsgn.newTree(
+                    t, 
+                    tmpt
+                )
+            t_case.add nnkOfBranch.newTree(
+                newLit(key),
+                stmtlist
+            )
+        t_case.add nnkElse.newTree(
+            newStmtList(
+                nnkRaiseStmt.newTree(
+                    newCall(bindSym"newException", ident"SyntaxError", newLit"Unexpected Token.")
+                )
+            )
+        )
+        state_case.add nnkOfBranch.newTree(
+            newLit(i),
+            newStmtList(
+                t_case
+            )
+        )
+    state_case.add nnkElse.newTree(
+        newStmtList(
+            nnkRaiseStmt.newTree(
+                newCall(bindSym"newException", ident"SyntaxError", newLit"Error that is impossible to be occured.")
+            )
+        )
+    )
+    result.body.add nnkForStmt.newTree(
+        tk,
+        newCall(newDotExpr(self, ident"lex"), src),
+        newStmtList(
+            nnkVarSection.newTree(
+                newIdentDefs(t, newEmptyNode(), prefix(newDotExpr(tk, ident"kind"), "$")),
+                newIdentDefs(tmpt, newEmptyNode(), prefix(newDotExpr(tk, ident"kind"), "$"))
+            ),
+            nnkWhileStmt.newTree(
+                bindSym"true",
+                newStmtList(
+                    # newCall("echo", t, nnkBracketExpr.newTree(stack, prefix(newLit(1), "^"))),
+                    state_case
+                )
+            )
+        )
+    )
+    # echo repr result
+    # echo dfa
+    # echo dfa.table
+    echo rules
 
 macro make*(id, toplevel, body: untyped): untyped =
     result = nnkStmtList.newNimNode()
@@ -529,9 +657,17 @@ macro make*(id, toplevel, body: untyped): untyped =
     tokens = find_token_and_rstr(lexer_argument)
     result.add typedef(tkid, tid, annons, tokens, nkid, nid, nodekinds, pid)
     result.add def_lexer(@[id, tkid, tid], lexer_argument, annons, tokens)
-    discard def_parser(@[id, nkid, nid], toplevel, parser_argument, annons, tokens)
+    result.add def_parser(@[id, nkid, nid], toplevel, parser_argument, annons, tokens)
     
     # echo repr(result)
+    # echo repr result[0]
+    # echo repr result[1]
+    # echo repr result[2]
+    # echo repr result[3]
+    # echo repr result[4]
+    # echo repr result[5]
+    # echo repr result[6]
+    # echo repr result[7]
 
 
 when isMainModule:

@@ -30,12 +30,12 @@ type
         GOTO
         ACC
     LRop* = object
-        op: LRopenum
-        val: int
+        op*: LRopenum
+        val*: int
     LRTable* = seq[Table[string, LRop]]
 
 const top = "top$"
-const eof = "$"
+const eof = "EOF"
 
 proc `$`*(self: Rule): string =
     result = self.left & ": "
@@ -112,6 +112,7 @@ proc `$`*(self: LRTable): string =
             s = if key in node: $node[key] else: ""
             result &= "$1|" % [center(s, l, ' ')]
         result &= '\n'
+    result = $result.underline
 
 
 proc ad(self: var LRItemSet, val: LRItem) =

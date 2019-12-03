@@ -1,0 +1,1800 @@
+  Executing task test in /Users/chocobo333/Desktop/mcmurry/mcmurry.nimble
+  Verifying dependencies for mcmurry@0.1.0
+      Info: Dependency on asciitype@any version already satisfied
+  Verifying dependencies for asciitype@0.1.0
+      Info: Dependency on https://github.com/chocobo333/nim-coloredString@any version already satisfied
+  Verifying dependencies for coloredString@0.1.0
+  Compiling /Users/chocobo333/Desktop/mcmurry/tests/test1 (from package mcmurry) using c backend
+proc parse*(self: Parser; src: string): ParserNode =
+  var
+    stack: seq[int] = @[0]
+    token_stack: type(result.tokens)
+    ret_stack: type(result.children)
+  for tk in self.lex(src):
+    var
+      t = $tk.kind
+      tmpt = $tk.kind
+    while true:
+      case stack[^1]
+      of 0:
+        case t
+        of "ANNON1":
+          stack.add(1)
+          token_stack.add(tk)
+          break
+        of "expression":
+          stack.add(2)
+          t = tmpt
+        of "INT":
+          stack.add(3)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(4)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(5)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(6)
+          t = tmpt
+        of "term":
+          stack.add(7)
+          t = tmpt
+        of "arith_expr":
+          stack.add(8)
+          t = tmpt
+        of "NAME":
+          stack.add(9)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(10)
+          t = tmpt
+        else:
+          break
+      of 1:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 2:
+        case t
+        of "EOF":
+          break
+        else:
+          break
+      of 3:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 4:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 5:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 6:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "trailer":
+          stack.add(11)
+          t = tmpt
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "ANNON4":
+          stack.add(12)
+          token_stack.add(tk)
+          break
+        of "annon2":
+          stack.add(13)
+          t = tmpt
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        else:
+          break
+      of 7:
+        case t
+        of "OP1":
+          stack.add(14)
+          token_stack.add(tk)
+          break
+        of "annon0":
+          stack.add(15)
+          t = tmpt
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = arith_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "arith_expr"
+        else:
+          break
+      of 8:
+        case t
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = expression
+          ret_stack.add(result)
+          tmpt = t
+          t = "expression"
+        else:
+          break
+      of 9:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 10:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = term
+          ret_stack.add(result)
+          tmpt = t
+          t = "term"
+        of "annon1":
+          stack.add(16)
+          t = tmpt
+        of "OP2":
+          stack.add(17)
+          token_stack.add(tk)
+          break
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = term
+          ret_stack.add(result)
+          tmpt = t
+          t = "term"
+        else:
+          break
+      of 11:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        else:
+          break
+      of 12:
+        case t
+        of "ANNON1":
+          stack.add(18)
+          token_stack.add(tk)
+          break
+        of "expression":
+          stack.add(19)
+          t = tmpt
+        of "INT":
+          stack.add(20)
+          token_stack.add(tk)
+          break
+        of "ANNON3":
+          stack.add(21)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(22)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(23)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(24)
+          t = tmpt
+        of "term":
+          stack.add(25)
+          t = tmpt
+        of "arith_expr":
+          stack.add(26)
+          t = tmpt
+        of "NAME":
+          stack.add(27)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(28)
+          t = tmpt
+        else:
+          break
+      of 13:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "trailer":
+          stack.add(29)
+          t = tmpt
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "ANNON4":
+          stack.add(12)
+          token_stack.add(tk)
+          break
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        else:
+          break
+      of 14:
+        case t
+        of "ANNON1":
+          stack.add(1)
+          token_stack.add(tk)
+          break
+        of "INT":
+          stack.add(3)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(4)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(5)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(6)
+          t = tmpt
+        of "term":
+          stack.add(30)
+          t = tmpt
+        of "NAME":
+          stack.add(9)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(10)
+          t = tmpt
+        else:
+          break
+      of 15:
+        case t
+        of "OP1":
+          stack.add(31)
+          token_stack.add(tk)
+          break
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = arith_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "arith_expr"
+        else:
+          break
+      of 16:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = term
+          ret_stack.add(result)
+          tmpt = t
+          t = "term"
+        of "OP2":
+          stack.add(32)
+          token_stack.add(tk)
+          break
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = term
+          ret_stack.add(result)
+          tmpt = t
+          t = "term"
+        else:
+          break
+      of 17:
+        case t
+        of "ANNON1":
+          stack.add(1)
+          token_stack.add(tk)
+          break
+        of "INT":
+          stack.add(3)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(4)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(5)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(6)
+          t = tmpt
+        of "NAME":
+          stack.add(9)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(33)
+          t = tmpt
+        else:
+          break
+      of 18:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 19:
+        case t
+        of "ANNON3":
+          stack.add(34)
+          token_stack.add(tk)
+          break
+        else:
+          break
+      of 20:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 21:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        else:
+          break
+      of 22:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 23:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 24:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "trailer":
+          stack.add(35)
+          t = tmpt
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "ANNON4":
+          stack.add(36)
+          token_stack.add(tk)
+          break
+        of "annon2":
+          stack.add(37)
+          t = tmpt
+        else:
+          break
+      of 25:
+        case t
+        of "OP1":
+          stack.add(38)
+          token_stack.add(tk)
+          break
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = arith_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "arith_expr"
+        of "annon0":
+          stack.add(39)
+          t = tmpt
+        else:
+          break
+      of 26:
+        case t
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = expression
+          ret_stack.add(result)
+          tmpt = t
+          t = "expression"
+        else:
+          break
+      of 27:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = atom
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom"
+        else:
+          break
+      of 28:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = term
+          ret_stack.add(result)
+          tmpt = t
+          t = "term"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          result.kind = term
+          ret_stack.add(result)
+          tmpt = t
+          t = "term"
+        of "annon1":
+          stack.add(40)
+          t = tmpt
+        of "OP2":
+          stack.add(41)
+          token_stack.add(tk)
+          break
+        else:
+          break
+      of 29:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        else:
+          break
+      of 30:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon0"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon0"
+        else:
+          break
+      of 31:
+        case t
+        of "ANNON1":
+          stack.add(1)
+          token_stack.add(tk)
+          break
+        of "INT":
+          stack.add(3)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(4)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(5)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(6)
+          t = tmpt
+        of "term":
+          stack.add(42)
+          t = tmpt
+        of "NAME":
+          stack.add(9)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(10)
+          t = tmpt
+        else:
+          break
+      of 32:
+        case t
+        of "ANNON1":
+          stack.add(1)
+          token_stack.add(tk)
+          break
+        of "INT":
+          stack.add(3)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(4)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(5)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(6)
+          t = tmpt
+        of "NAME":
+          stack.add(9)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(43)
+          t = tmpt
+        else:
+          break
+      of 33:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        else:
+          break
+      of 34:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        else:
+          break
+      of 35:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        else:
+          break
+      of 36:
+        case t
+        of "ANNON1":
+          stack.add(18)
+          token_stack.add(tk)
+          break
+        of "expression":
+          stack.add(44)
+          t = tmpt
+        of "INT":
+          stack.add(20)
+          token_stack.add(tk)
+          break
+        of "ANNON3":
+          stack.add(45)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(22)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(23)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(24)
+          t = tmpt
+        of "term":
+          stack.add(25)
+          t = tmpt
+        of "arith_expr":
+          stack.add(26)
+          t = tmpt
+        of "NAME":
+          stack.add(27)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(28)
+          t = tmpt
+        else:
+          break
+      of 37:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "trailer":
+          stack.add(46)
+          t = tmpt
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = atom_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "atom_expr"
+        of "ANNON4":
+          stack.add(36)
+          token_stack.add(tk)
+          break
+        else:
+          break
+      of 38:
+        case t
+        of "ANNON1":
+          stack.add(18)
+          token_stack.add(tk)
+          break
+        of "INT":
+          stack.add(20)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(22)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(23)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(24)
+          t = tmpt
+        of "term":
+          stack.add(47)
+          t = tmpt
+        of "NAME":
+          stack.add(27)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(28)
+          t = tmpt
+        else:
+          break
+      of 39:
+        case t
+        of "OP1":
+          stack.add(48)
+          token_stack.add(tk)
+          break
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = arith_expr
+          ret_stack.add(result)
+          tmpt = t
+          t = "arith_expr"
+        else:
+          break
+      of 40:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = term
+          ret_stack.add(result)
+          tmpt = t
+          t = "term"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          result.kind = term
+          ret_stack.add(result)
+          tmpt = t
+          t = "term"
+        of "OP2":
+          stack.add(49)
+          token_stack.add(tk)
+          break
+        else:
+          break
+      of 41:
+        case t
+        of "ANNON1":
+          stack.add(18)
+          token_stack.add(tk)
+          break
+        of "INT":
+          stack.add(20)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(22)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(23)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(24)
+          t = tmpt
+        of "NAME":
+          stack.add(27)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(50)
+          t = tmpt
+        else:
+          break
+      of 42:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon0"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon0"
+        else:
+          break
+      of 43:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        of "EOF":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        else:
+          break
+      of 44:
+        case t
+        of "ANNON3":
+          stack.add(51)
+          token_stack.add(tk)
+          break
+        else:
+          break
+      of 45:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        else:
+          break
+      of 46:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon2"
+        else:
+          break
+      of 47:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon0"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon0"
+        else:
+          break
+      of 48:
+        case t
+        of "ANNON1":
+          stack.add(18)
+          token_stack.add(tk)
+          break
+        of "INT":
+          stack.add(20)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(22)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(23)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(24)
+          t = tmpt
+        of "term":
+          stack.add(52)
+          t = tmpt
+        of "NAME":
+          stack.add(27)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(28)
+          t = tmpt
+        else:
+          break
+      of 49:
+        case t
+        of "ANNON1":
+          stack.add(18)
+          token_stack.add(tk)
+          break
+        of "INT":
+          stack.add(20)
+          token_stack.add(tk)
+          break
+        of "ANNON0":
+          stack.add(22)
+          token_stack.add(tk)
+          break
+        of "ANNON2":
+          stack.add(23)
+          token_stack.add(tk)
+          break
+        of "atom":
+          stack.add(24)
+          t = tmpt
+        of "NAME":
+          stack.add(27)
+          token_stack.add(tk)
+          break
+        of "atom_expr":
+          stack.add(53)
+          t = tmpt
+        else:
+          break
+      of 50:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        else:
+          break
+      of 51:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        of "ANNON4":
+          result = ParserNode()
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          result.kind = trailer
+          ret_stack.add(result)
+          tmpt = t
+          t = "trailer"
+        else:
+          break
+      of 52:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon0"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon0"
+        else:
+          break
+      of 53:
+        case t
+        of "OP1":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        of "ANNON3":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        of "OP2":
+          result = ParserNode()
+          discard stack.pop()
+          var tmpannon = ret_stack.pop
+          result.children.insert(tmpannon.children, 0)
+          result.tokens.insert(tmpannon.tokens, 0)
+          discard stack.pop()
+          result.tokens.insert(token_stack.pop, 0)
+          discard stack.pop()
+          result.children.insert(ret_stack.pop, 0)
+          ret_stack.add(result)
+          tmpt = t
+          t = "annon1"
+        else:
+          break
+      else:
+        raise newException(SyntaxError, "Error that is impossible to be occured.")
+
+expression@[]
+└---arith_expr@[]
+    └---atom@[[  INT  : "1"]]
+    └---atom@[[  OP2  : "*"]]
+        └---atom@[[  OP2  : "*"]]
+            └---atom_expr@[]
+                └---atom@[[  INT  : "2"]]
+        └---atom@[[  INT  : "3"]]
+    └---atom@[[  OP1  : "+"]]
+        └---atom@[[  OP1  : "+"]]
+            └---term@[]
+                └---atom@[[  INT  : "4"]]
+                └---atom@[[  OP2  : "*"]]
+                    └---atom@[[  OP2  : "*"]]
+                        └---atom_expr@[]
+                            └---atom@[[  INT  : "5"]]
+                    └---atom@[[  INT  : "6"]]
+        └---atom@[[  INT  : "7"]]
+        └---atom@[[  OP2  : "*"]]
+            └---atom@[[  OP2  : "*"]]
+                └---atom_expr@[]
+                    └---atom@[[  INT  : "8"]]
+            └---atom@[[  INT  : "9"]]
+[OK] lex
+   Success: Execution finished
+   Success: All tests passed
