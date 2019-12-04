@@ -241,7 +241,7 @@ template rule_functions(rules: seq[Rule]) =
                             for key in item.la:
                                 # if there is shift/reduce conflict, raise error
                                 if key in self.table[nn]:
-                                        error "not lr(1) for $!" % [item.rule.left]
+                                        error "not lr(1) for $1" % [item.rule.left]
                                 self.table[nn][key] = LRop(op: LRopenum.REDUCE, val: nr)
 
 proc makeDFA*(rules: seq[Rule], toplevel: NimNode): DFA =
