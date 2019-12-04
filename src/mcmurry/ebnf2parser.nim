@@ -501,11 +501,38 @@ proc def_parser(ids: seq[NimNode], toplevel, body: NimNode, annons: seq[NimNode]
             if rule.left.startsWith("annon"):
                 if rule.right[0] != rule.left:
                     nannon += 1
-                    for r in annonrules:
-                        if r.right == rule.right:
-                            error "If you want to use a same pattern twice or more, you can make a new rule instead.", e
-                    annonrules.add rule
+                    # for r in annonrules:
+                    #     if r.right == rule.right:
+                    #         error "If you want to use a same pattern twice or more, you can make a new rule instead.", e
+                    # annonrules.add rule
             rules.add rule
+    var i = 0
+    while i < rules.len:
+        var k = -1
+        if not rules[i].left.startsWith("annon"):
+            i += 1
+            continue
+        for j, e in rules:
+            if i == j:
+                continue
+            if not e.left.startsWith("annon"):
+                continue
+            if e.right == rules[i].right:
+                k = j
+                break
+        if k == -1:
+            i += 1
+            continue
+        for l, e in mpairs(rules):
+            if l == k:
+                continue
+            if e.left == rules[k].left:
+                e.left = rules[i].left
+            for m, ee in e.right:
+                if ee == rules[k].left:
+                    e.right[m] = rules[i].left
+        rules.delete(k)
+        i = 0
 
     # TODO: implement expansion of lr item set.
     var
@@ -635,7 +662,7 @@ proc def_parser(ids: seq[NimNode], toplevel, body: NimNode, annons: seq[NimNode]
     # echo repr result
     # echo dfa
     # echo dfa.table
-    # echo rules
+    echo rules
 
 macro Mcmurry*(id, toplevel, body: untyped): untyped =
     ##[
