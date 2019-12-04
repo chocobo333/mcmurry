@@ -4,8 +4,23 @@ This module provides ebnf lexer/parser generator and supports to manipulate AST;
 The parser generator is implemented as a macro.
 
 #  Contents
-* [Usage](#Usage)
+* [Installation](#Installation)
+* [Document](#Document)
 * [TODO](#TODO)
+
+# Installation
+```
+nimble install mcmurry
+```
+
+# Document
+* [Generating Parser](#Usage)
+* [Example](#Example)
+* [Tree type](#TreeReference)
+* [Token type](TokenReference)
+* [Manipulating AST](#ManipulatingAST)
+    * [Visitor](#Visitor)
+    * [Transformer](#Transformer)
 
 # Usage
 
@@ -88,7 +103,17 @@ var parser = Parser()
 echo parser.parse("3+4*2")
 ```
 
-## Manipulating AST.
+# TreeReference
+* ``kind``
+* ``children``
+* ``tokens``
+
+# TokenReference
+* ``kind``
+* ``val``
+* ``pos``
+
+# Manipulating AST
 
 # *Not Implemented.*
 
@@ -96,7 +121,7 @@ echo parser.parse("3+4*2")
 
 ``Visitor`` and ``Transformer`` are interfaces to manipulate AST that the generated parser returns.
 
-* #### **Vistor**
+* #### **Visitor**
 
 * #### **Transformer**
 
