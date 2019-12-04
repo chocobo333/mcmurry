@@ -8,6 +8,7 @@ The parser generator is implemented as a macro.
 * [Installation](#Installation)
 * [Document](#Document)
 * [TODO](#TODO)
+* [License](#License)
 
 # Installation
 ```
@@ -168,5 +169,8 @@ Using ``macro`` and computing in ``macro``, using editor/pc may be busy.
 * implementation of ``Visitor`` and ``Transformer``.
 * variation of parser algorithm.
 * more predefined variables.
+
+# License
+MIT License
 
 **author**: chocobo333
