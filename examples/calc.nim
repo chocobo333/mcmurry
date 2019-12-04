@@ -74,10 +74,16 @@ proc eval(self: Parser.Node): float =
     of atom:
         return tokens[0].val.parseFloat()
 
-when isMainModule:
-    var
-        ast = parser.parse("1 + 2*5 + 3 + 4/2")
-    echo ast.simplify
-    echo ast.simplify.visit
 
-    assert ast.simplify.eval() == 16.0
+when isMainModule:
+    import rdstdin
+
+    var
+        input: string
+    while true:
+        input = readLineFromStdin(">>> ")
+        try:
+            echo parser.parse(input).simplify.eval()
+        except SyntaxError, TokenError:
+            echo "Error!!"
+            break

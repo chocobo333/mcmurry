@@ -7,39 +7,23 @@ Mcmurry(id=Parser, toplevel=expression):
         expression:
             arith_expr
         arith_expr:
-            term *(OP1 term)
+            [arith_expr OP1] term
         term:
-            atom_expr *(OP2 atom_expr)
-        atom_expr:
-            atom *trailer
-        trailer:
-            r"\(" [expression] r"\)"
+            [term OP2] factor
+        factor:
+            power
+            OP1 factor
+        power:
+            atom [OP3 factor]
         atom:
-            NAME
             INT
-            r"nil"
-            r"false"
-            r"true"
+            FLOAT
     lexer:
-        r"[\+\-]": OP1
+        r"\*\*": OP3
+        r"[\+\-~]": OP1
         r"[\*/]": OP2
-        r"[a-zA-Z_][a-zA-z_0-9]*": NAME
+        r"([0-9]*[\.])?[0-9]+": FLOAT
         r"[1-9][0-9]*": INT
-        r"("").*("")": STRING
-        var
-            nIndent = 0
-        r"\n[ ]*":
-            block:
-                if len-1 > nIndent:
-                    nIndent = len-1
-                    INDENT
-                elif len-1 < nIndent:
-                    nIndent = len-1
-                    DEDENT
-                else:
-                    LF
         r"\s+": SPACE
-        r"\n?\s*#[^\n]*": COMMENT
         %ignore:
             SPACE
-            COMMENT
