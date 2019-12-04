@@ -112,7 +112,6 @@ proc `$`*(self: LRTable): string =
             s = if key in node: $node[key] else: ""
             result &= "$1|" % [center(s, l, ' ')]
         result &= '\n'
-    result = $result.underline
 
 
 proc ad(self: var LRItemSet, val: LRItem) =

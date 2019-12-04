@@ -1,8 +1,5 @@
 
 import asciitype
-import coloredString
-
-export coloredString
 export asciitype
 
 proc enum_maxlen*(t: typedesc[enum]): int =

@@ -11,6 +11,5 @@ skipDirs = @["tmp"]
 
 # Dependencies
 
-requires "nim >= 1.0.0"
+requires "nim >= 1.0.4"
 requires "asciitype"
-requires "https://github.com/chocobo333/nim-coloredString"
