@@ -208,52 +208,6 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
     var
         self_next = result[^1].params[1][0]
         next = result[^1].body
-    for i, e in rstrs:
-        var
-            ml = newCall(bindSym"matchlen", newDotExpr(self_next, ident"program"), ident("re" & $pid & $i), nnkExprEqExpr.newTree(ident"start", newDotExpr(self_next, ident"i")))
-        next[0].add nnkElifBranch.newTree(
-            infix(ml, "!=", newLit(-1)),
-            newStmtList(
-                nnkVarSection.newTree(
-                    newIdentDefs(ident"len", newEmptyNode(), ml),
-                    newIdentDefs(ident"kind", newEmptyNode(), e[1]),
-                    newIdentDefs(ident"str", newEmptyNode(),
-                        nnkBracketExpr.newTree(
-                            newDotExpr(self_next, ident"program"),
-                            infix(newDotExpr(self_next, ident"i"), "..", infix(newDotExpr(self_next, ident"i"), "+", infix(ident"len", "-", newLit(1))))
-                        )
-                    ),
-                    newIdentDefs(ident"lines", newEmptyNode(), newCall(bindSym"splitLines", ident"str"))
-                ),
-                nnkAsgn.newTree(
-                    ident"result",
-                    nnkObjConstr.newTree(
-                        tid,
-                        nnkExprColonExpr.newTree(ident"kind", ident"kind"),
-                        nnkExprColonExpr.newTree(ident"val", ident"str"),
-                        nnkExprColonExpr.newTree(ident"pos", newDotExpr(self_next, ident"pos"))
-                    )
-                ),
-                infix(newDotExpr(self_next, ident"i"), "+=", ident"len"),
-                infix(nnkBracketExpr.newTree(newDotExpr(self_next, ident"pos"), newLit(0)), "+=", infix(newDotExpr(ident"lines", bindSym"len"), "-", newLit(1))),
-                nnkIfStmt.newTree(
-                    nnkElifBranch.newTree(
-                        infix(newDotExpr(ident"lines", bindSym"len"), "==", newLit(1)),
-                        newStmtList(
-                            infix(nnkBracketExpr.newTree(newDotExpr(self_next, ident"pos"), newLit(1)), "+=", ident"len")
-                        )
-                    ),
-                    nnkElse.newTree(
-                        newStmtList(
-                            nnkAsgn.newTree(
-                                nnkBracketExpr.newTree(newDotExpr(self_next, ident"pos"), newLit(1)),
-                                infix(newLit(1), "+", newDotExpr(nnkBracketExpr.newTree(ident"lines", prefix(newLit(1), "^")), bindSym"len"))
-                            )
-                        )
-                    )
-                )
-            )
-        )
     for i, e in annons:
         var
             ml = newCall(bindSym"matchlen", newDotExpr(self_next, ident"program"), ident("re" & $pid & "annon" & $i), nnkExprEqExpr.newTree(ident"start", newDotExpr(self_next, ident"i")))
@@ -300,6 +254,53 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
                 )
             )
         )
+    for i, e in rstrs:
+        var
+            ml = newCall(bindSym"matchlen", newDotExpr(self_next, ident"program"), ident("re" & $pid & $i), nnkExprEqExpr.newTree(ident"start", newDotExpr(self_next, ident"i")))
+        next[0].add nnkElifBranch.newTree(
+            infix(ml, "!=", newLit(-1)),
+            newStmtList(
+                nnkVarSection.newTree(
+                    newIdentDefs(ident"len", newEmptyNode(), ml),
+                    newIdentDefs(ident"kind", newEmptyNode(), e[1]),
+                    newIdentDefs(ident"str", newEmptyNode(),
+                        nnkBracketExpr.newTree(
+                            newDotExpr(self_next, ident"program"),
+                            infix(newDotExpr(self_next, ident"i"), "..", infix(newDotExpr(self_next, ident"i"), "+", infix(ident"len", "-", newLit(1))))
+                        )
+                    ),
+                    newIdentDefs(ident"lines", newEmptyNode(), newCall(bindSym"splitLines", ident"str"))
+                ),
+                nnkAsgn.newTree(
+                    ident"result",
+                    nnkObjConstr.newTree(
+                        tid,
+                        nnkExprColonExpr.newTree(ident"kind", ident"kind"),
+                        nnkExprColonExpr.newTree(ident"val", ident"str"),
+                        nnkExprColonExpr.newTree(ident"pos", newDotExpr(self_next, ident"pos"))
+                    )
+                ),
+                infix(newDotExpr(self_next, ident"i"), "+=", ident"len"),
+                infix(nnkBracketExpr.newTree(newDotExpr(self_next, ident"pos"), newLit(0)), "+=", infix(newDotExpr(ident"lines", bindSym"len"), "-", newLit(1))),
+                nnkIfStmt.newTree(
+                    nnkElifBranch.newTree(
+                        infix(newDotExpr(ident"lines", bindSym"len"), "==", newLit(1)),
+                        newStmtList(
+                            infix(nnkBracketExpr.newTree(newDotExpr(self_next, ident"pos"), newLit(1)), "+=", ident"len")
+                        )
+                    ),
+                    nnkElse.newTree(
+                        newStmtList(
+                            nnkAsgn.newTree(
+                                nnkBracketExpr.newTree(newDotExpr(self_next, ident"pos"), newLit(1)),
+                                infix(newLit(1), "+", newDotExpr(nnkBracketExpr.newTree(ident"lines", prefix(newLit(1), "^")), bindSym"len"))
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
     next[0].add nnkElse.newTree(
         newStmtList(
             nnkRaiseStmt.newTree(
