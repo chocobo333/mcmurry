@@ -2,7 +2,7 @@
 import mcmurry
 export mcmurry
 
-make(id=Parser, toplevel=expression):
+Mcmurry(id=Parser, toplevel=expression):
     parser:
         expression:
             arith_expr

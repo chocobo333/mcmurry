@@ -627,7 +627,79 @@ proc def_parser(ids: seq[NimNode], toplevel, body: NimNode, annons: seq[NimNode]
     # echo dfa.table
     echo rules
 
-macro make*(id, toplevel, body: untyped): untyped =
+macro Mcmurry*(id, toplevel, body: untyped): untyped =
+    ##[
+        Generating lexer/parser.
+        ------------------------
+        This parser generator generates parser and lexer at the same time.
+        it accepts LR(1) grammar and supports ebnf (actually not all of).
+
+        **Mcmurry**
+        By using a macro named ``Mcmurry``, you can define a parser class includes a lexer.
+
+        **Mcmurry arguments**
+        
+        * ``id``
+            Set name of created parser class.
+        * ``toplevel``
+            Set starting rule.
+
+        **Grammer Definitions** and **Patterns**
+
+        * ``rule: ...``
+            Define a rule.
+            Name of rule matches re"[a-z][a-z0-9_]*"
+        * ``[foo]``
+            Match 0 or 1.
+        * ``(foo bar)``
+            Group together (for an operator).
+        * ``*foo``
+            Match 0 or more.
+        * ``+bar``
+            Match 1 or more.
+        * .. code:: nim
+
+            rule:
+                foo
+                bar
+
+        Match foo or bar.
+
+        **Token Definitions**
+        * ``r"token": TOKEN``
+            Define a token.
+            right part is a raw string as a regular expression.
+            left part is expression returns a sort of token.
+            You can use ``block:`` in right part.
+
+            Name of token matches re"[A-Z][A-Z0-9]*"
+        * ``var variable``
+            Define a variable used in deciding a sort of token that returned by the lexer.
+            Used postlex.
+
+            * Predefined variables
+
+                * ``len``
+                    Indicates the length of string that matched the regular expression.
+
+        **Example**
+
+        .. code:: nim
+        
+            Mcmurry(id=Parser, toplevel=expression):
+                parser:
+                    expression: arith_expr
+                    arith_expr: term *(r"\+" term)
+                    term: atom *(r"\*" atom)
+                    atom:
+                        INT
+                        FLOAT
+                lexer:
+                    r"([0-9]*[\.])?[0-9]+": FLOAT
+                    r"[1-9][0-9]*": INT
+            var parser = Parser()
+            echo parser.parse("3+4*2")
+    ]##
     result = nnkStmtList.newNimNode()
     body.expectKind(nnkStmtList)
     body.expectLen(2)
@@ -671,7 +743,7 @@ macro make*(id, toplevel, body: untyped): untyped =
 
 
 when isMainModule:
-    make(id=Parser, toplevel=expression):
+    Mcmurry(id=Parser, toplevel=expression):
         parser:
             expression: arith_expr
             cond_expr: expression r"\?" expression r":" expression
