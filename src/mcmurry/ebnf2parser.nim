@@ -262,14 +262,15 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
             newStmtList(
                 nnkVarSection.newTree(
                     newIdentDefs(ident"len", newEmptyNode(), ml),
-                    newIdentDefs(ident"kind", newEmptyNode(), e[1]),
                     newIdentDefs(ident"str", newEmptyNode(),
                         nnkBracketExpr.newTree(
                             newDotExpr(self_next, ident"program"),
                             infix(newDotExpr(self_next, ident"i"), "..", infix(newDotExpr(self_next, ident"i"), "+", infix(ident"len", "-", newLit(1))))
                         )
                     ),
-                    newIdentDefs(ident"lines", newEmptyNode(), newCall(bindSym"splitLines", ident"str"))
+                    newIdentDefs(ident"lines", newEmptyNode(), newCall(bindSym"splitLines", ident"str")),
+                    newIdentDefs(ident"kind", newEmptyNode(), e[1])
+
                 ),
                 nnkAsgn.newTree(
                     ident"result",
@@ -777,7 +778,8 @@ macro Mcmurry*(id, toplevel, body: untyped): untyped =
     # echo repr result[5]
     # echo repr result[6]
     # echo repr result[7]
-    # echo repr result[8]
+    # echo repr result[8] # Lexer
+    # echo repr result[9]
 
 
 when isMainModule:

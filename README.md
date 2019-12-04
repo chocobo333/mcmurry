@@ -88,6 +88,8 @@ By using a macro named ``Mcmurry``, you can define a parser class includes a lex
         * ``len``: int
 
             Indicates the length of string that matched the regular expression.
+        * ``str``: string
+            Indicates the string that matched the regular expression.
         * ``pos``: (int, int)
 
             Indicates the position;(line, column) of string that matched the regular expression.
