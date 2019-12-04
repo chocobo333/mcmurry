@@ -118,6 +118,15 @@ proc typedef(tkid, tid: NimNode, annons, tokens: seq[NimNode], nkid, nid: NimNod
 
     result.add typsec
 
+    result.add quote do:
+        template Node*(typ: typedesc[`pid`]): untyped = `nid`
+    result.add quote do:
+        template NodeKind*(typ: typedesc[`pid`]): untyped = `nkid`
+    result.add quote do:
+        template Token*(typ: typedesc[`pid`]): untyped = `tid`
+    result.add quote do:
+        template TokenKind*(typ: typedesc[`pid`]): untyped = `tkid`
+
 proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: seq[NimNode]): seq[NimNode] =
     body.expectKind(nnkStmtList)
     var
@@ -625,7 +634,7 @@ proc def_parser(ids: seq[NimNode], toplevel, body: NimNode, annons: seq[NimNode]
     # echo repr result
     # echo dfa
     # echo dfa.table
-    echo rules
+    # echo rules
 
 macro Mcmurry*(id, toplevel, body: untyped): untyped =
     ##[
@@ -740,6 +749,7 @@ macro Mcmurry*(id, toplevel, body: untyped): untyped =
     # echo repr result[5]
     # echo repr result[6]
     # echo repr result[7]
+    # echo repr result[8]
 
 
 when isMainModule:

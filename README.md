@@ -1,6 +1,6 @@
 # Mcmurry
 
-This module provides ebnf lexer/parser generator and supports to manipulate AST; Abstract Syntax Tree, in pure nim.
+This module provides ebnf lexer/parser generator and a way to manipulate AST; Abstract Syntax Tree, in pure nim.
 
 The parser generator is implemented as a macro.
 
@@ -19,7 +19,7 @@ nimble install mcmurry
 * [Example](#Example)
 * [Reference](#Reference)
     * [Parser type](#Parser-Reference)
-    * [Tree type](#Tree-Reference)
+    * [Node type](#Node-Reference)
     * [Token type](#Token-Reference)
 * [Manipulating AST](#Manipulating-AST)
     * [Visitor](#Visitor)
@@ -109,28 +109,52 @@ echo parser.parse("3+4*2")
 # Reference
 
 ## Parser Reference
+* ``iterator lex(str): Token``
+* ``proc parse(str): Node``
 
-## Tree Reference
-* ``kind``
-* ``children``
-* ``tokens``
+## Node Reference
+* ``kind: NodeKind``
+
+    indicates kind of the node.
+* ``children: seq[Node]``
+
+    indicates children node of the node.
+* ``tokens: seq[Token]``
+
+    indicates tokens that matched the rule.
 
 ## Token Reference
-* ``kind``
-* ``val``
-* ``pos``
+* ``kind: TokenKind``
+
+    indicates kind of the token.
+* ``val: str``
+
+    indicates string matched.
+* ``pos: (int, int)``
+
+    indicates position of string matched.
 
 # Manipulating AST
-
-# *Not Implemented.*
 
 ### **Visitor** *vs* **Transformer**
 
 ``Visitor`` and ``Transformer`` are interfaces to manipulate AST that the generated parser returns.
 
 * #### **Visitor**
+    A proc created by ``Visitor`` visit each children of the node, and run a suitable procedure according to a kind of the node.
+    * exsample
+        ```nim
+        import strutils
+        Visitor(Parser, visit):
+            proc atom(self: Parser.Node) =
+                var
+                    tmp = self.tokens[0].val.parseInt()
+                self.tokens = @[Parser.Token(kind: INT, val: $(tmp+1))]
+        ```
 
 * #### **Transformer**
+    * *Not Implemented.*
+
 
 
 **Note**:

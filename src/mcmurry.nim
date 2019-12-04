@@ -2,7 +2,7 @@
     Mcmurry
     =======
 
-    This module provides ebnf lexer/parser generator and supports to manipulate AST; Abstract Syntax Tree, in pure nim.
+    This module provides ebnf lexer/parser generator and a way to manipulate AST; Abstract Syntax Tree, in pure nim.
     The parser generator is implemented as a macro.
 
     Generating lexer/parser.
@@ -78,7 +78,6 @@
 
     Manipulating AST.
     -----------------
-    *Not Implemented*
 
     **Visitor** *vs* **Transformer**
 
@@ -86,7 +85,22 @@
 
     **Vistor**
 
+    A proc created by ``Visitor`` visit each children of the node, and run a suitable procedure according to a kind of the node.
+
+    **exsample**
+
+    .. code:: nim
+    
+        import strutils
+        Visitor(Parser, visit):
+            proc atom(self: Parser.Node) =
+                var
+                    tmp = self.tokens[0].val.parseInt()
+                self.tokens = @[Parser.Token(kind: INT, val: $(tmp+1))]
+
     **Transformer**
+    
+    *Not Implemented*
 
     **Note**: Using ``macro`` and computing in ``macro``, using editor/pc may be busy.
 
@@ -104,5 +118,7 @@
 ]##
 
 import mcmurry/ebnf2parser
+import mcmurry/manipulating_node
 
 export ebnf2parser
+export manipulating_node
