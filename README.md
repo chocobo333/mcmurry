@@ -19,8 +19,8 @@ nimble install mcmurry
 * [Reference](#Reference)
     * [Parser type](#Parser-Reference)
     * [Tree type](#Tree-Reference)
-    * [Token type](Token-Reference)
-* [Manipulating AST](#ManipulatingAST)
+    * [Token type](#Token-Reference)
+* [Manipulating AST](#Manipulating-AST)
     * [Visitor](#Visitor)
     * [Transformer](#Transformer)
 
