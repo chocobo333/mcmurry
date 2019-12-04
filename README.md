@@ -171,6 +171,6 @@ Using ``macro`` and computing in ``macro``, using editor/pc may be busy.
 * more predefined variables.
 
 # License
-MIT
+MIT License
 
 **author**: chocobo333
