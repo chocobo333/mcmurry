@@ -37,7 +37,7 @@ proc eval(self: Parser.Node): float =
         return tokens[0].val.parseFloat()
 
 
-Visitor(Parser, visit):
+Visitor(Parser, inc_all):
     proc atom(self: Parser.Node) =
         var
             tmp = self.tokens[0].val.parseInt()
@@ -56,6 +56,10 @@ test "lex":
     
     check test1.eval() == 1.0*2*3+4*5*6+7*8*9
     check test2.eval() == 4.0*4+2/4+1*4 - 12
+
+    check test1.inc_all.eval() == 2.0*3*4+5*6*7+8*9*10
+    check test2.inc_all.eval() == 5.0*5+3/5+2*5 - 13
+
     expect(SyntaxError):
         discard parser.parse("*3 + 5")
     expect(SyntaxError):
