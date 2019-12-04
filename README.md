@@ -16,8 +16,10 @@ nimble install mcmurry
 # Document
 * [Generating Parser](#Usage)
 * [Example](#Example)
-* [Tree type](#TreeReference)
-* [Token type](TokenReference)
+* [Reference](#Reference)
+    * [Parser type](#Parser-Reference)
+    * [Tree type](#Tree-Reference)
+    * [Token type](Token-Reference)
 * [Manipulating AST](#ManipulatingAST)
     * [Visitor](#Visitor)
     * [Transformer](#Transformer)
@@ -103,12 +105,16 @@ var parser = Parser()
 echo parser.parse("3+4*2")
 ```
 
-# TreeReference
+# Reference
+
+## Parser Reference
+
+## Tree Reference
 * ``kind``
 * ``children``
 * ``tokens``
 
-# TokenReference
+## Token Reference
 * ``kind``
 * ``val``
 * ``pos``
