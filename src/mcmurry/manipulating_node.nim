@@ -15,7 +15,7 @@ proc simplify*(self: NodeBase): NodeBase =
     else:
         return self
 
-macro kindcase [E: enum](self: untyped, nodekind: typedesc[E]): untyped =
+macro kindcase*[E: enum](self: untyped, nodekind: typedesc[E]): untyped =
     var
         casestmt = nnkCaseStmt.newTree(newDotExpr(self, ident"kind"))
         nodekinds = nodekind.getImpl[2][1..^1]
