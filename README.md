@@ -44,7 +44,7 @@ By using a macro named ``Mcmurry``, you can define a parser class includes a lex
 * ``rule: ...``
 
     Define a rule.
-    Name of rule matches re"[a-z][a-z0-9_]*"
+    Name of rule must matche re"[a-z][a-z0-9_]*"
 * ``[foo]``
 
     Match 0 or 1.
@@ -73,7 +73,7 @@ By using a macro named ``Mcmurry``, you can define a parser class includes a lex
     left part is expression returns a sort of token.
     You can use ``block:`` in right part.
 
-    Name of token matches re"[A-Z][A-Z0-9]*"
+    Name of token must matche re"[A-Z][A-Z0-9]*"
 * ``var variable``
 
     Define a variable used in deciding a sort of token that returned by the lexer.
