@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.1"
+version       = "0.1.2"
 author        = "chocobo333"
 description   = "A module for generating lexer/parser."
 license       = "MIT"
