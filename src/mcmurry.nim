@@ -113,12 +113,22 @@
     * implementation of ``Visitor`` and ``Transformer``.
     * variation of parser algorithm.
     * more predefined variables.
+    * custom errors
 
     :author: chocobo333
 ]##
 
-import mcmurry/ebnf2parser
-import mcmurry/manipulating_node
+import mcmurrypkg/ebnf2parser
+import mcmurrypkg/manipulating_node
 
 export ebnf2parser
 export manipulating_node
+
+#[
+    TODO: improve custom errors
+]#
+
+when isMainModule:
+    import mcmurrypkg/file2parser
+
+    echo "Hello world"

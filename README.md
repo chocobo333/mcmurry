@@ -25,6 +25,7 @@ nimble install mcmurry
 * [Manipulating AST](#Manipulating-AST)
     * [Visitor](#Visitor)
     * [Transformer](#Transformer)
+* [Text file into parser source file](#Generate-from-Text-file)
 
 # Usage
 
@@ -161,7 +162,9 @@ echo parser.parse("3+4*2")
 * #### **Transformer**
     * *Not Implemented.*
 
-
+# Generate from Text file
+You can make parser source file from text file without ``macro``.
+In this way, your PC may be no louder than.
 
 **Note**:
 Using ``macro`` and computing in ``macro``, using editor/pc may be busy.
@@ -174,6 +177,7 @@ Using ``macro`` and computing in ``macro``, using editor/pc may be busy.
 * implementation of ``Visitor`` and ``Transformer``.
 * variation of parser algorithm.
 * more predefined variables.
+* custom errors
 
 # License
 MIT License

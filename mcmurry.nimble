@@ -5,7 +5,9 @@ author        = "chocobo333"
 description   = "A module for generating lexer/parser."
 license       = "MIT"
 srcDir        = "src"
-skipDirs = @["tmp"]
+skipDirs      = @["tmp"]
+installExt    = @["nim"]
+bin           = @["mcmurry"]
 
 
 

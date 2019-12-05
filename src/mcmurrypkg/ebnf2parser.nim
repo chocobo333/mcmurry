@@ -184,6 +184,11 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
         letsec.add nnkIdentDefs.newTree(ident("re" & $pid & "annon" & $i), newEmptyNode(), nnkCallStrLit.newTree(bindSym"re", e))
     result.add letsec
 
+    var kind_stack = ident"kind_stack"
+    result.add quote do:
+        var
+            `kind_stack`: seq[`tkid`] = @[]
+
     # proc program
     result.add quote do:
         proc program*(self: `pid`): string =
@@ -203,6 +208,8 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
     # proc next
     result.add quote do:
         proc next*(self: `pid`): `tid` =
+            if `kind_stack`.len != 0:
+                return `tid`(kind: `kind_stack`.pop(), pos: self.pos)
             if self.i >= self.program.len:
                 return `tid`(kind: `tkid`.EOF, val: "$", pos: self.pos)
     var
@@ -211,7 +218,7 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
     for i, e in annons:
         var
             ml = newCall(bindSym"matchlen", newDotExpr(self_next, ident"program"), ident("re" & $pid & "annon" & $i), nnkExprEqExpr.newTree(ident"start", newDotExpr(self_next, ident"i")))
-        next[0].add nnkElifBranch.newTree(
+        next[^1].add nnkElifBranch.newTree(
             infix(ml, "!=", newLit(-1)),
             newStmtList(
                 nnkVarSection.newTree(
@@ -257,7 +264,7 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
     for i, e in rstrs:
         var
             ml = newCall(bindSym"matchlen", newDotExpr(self_next, ident"program"), ident("re" & $pid & $i), nnkExprEqExpr.newTree(ident"start", newDotExpr(self_next, ident"i")))
-        next[0].add nnkElifBranch.newTree(
+        next[^1].add nnkElifBranch.newTree(
             infix(ml, "!=", newLit(-1)),
             newStmtList(
                 nnkVarSection.newTree(
@@ -302,7 +309,7 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
             )
         )
 
-    next[0].add nnkElse.newTree(
+    next[^1].add nnkElse.newTree(
         newStmtList(
             nnkRaiseStmt.newTree(
                 newCall(bindSym"newException", ident"TokenError", newLit"Unexpected characters.")
@@ -663,7 +670,7 @@ proc def_parser(ids: seq[NimNode], toplevel, body: NimNode, annons: seq[NimNode]
     # echo repr result
     # echo dfa
     # echo dfa.table
-    echo rules
+    # echo rules
 
 macro Mcmurry*(id, toplevel, body: untyped): untyped =
     ##[
@@ -778,8 +785,8 @@ macro Mcmurry*(id, toplevel, body: untyped): untyped =
     # echo repr result[5]
     # echo repr result[6]
     # echo repr result[7]
-    # echo repr result[8] # Lexer
-    # echo repr result[9]
+    # echo repr result[8]
+    # echo repr result[9] # Lexer
 
 
 when isMainModule:
