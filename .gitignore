@@ -4,7 +4,6 @@
 
 # Binary files
 bin/
-mcmurry
 
 # Nim's cache files
 nimcache/

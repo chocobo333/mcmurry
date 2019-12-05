@@ -118,8 +118,8 @@
     :author: chocobo333
 ]##
 
-import mcmurrypkg/ebnf2parser
-import mcmurrypkg/manipulating_node
+import mcmurry/ebnf2parser
+import mcmurry/manipulating_node
 
 export ebnf2parser
 export manipulating_node
@@ -127,8 +127,3 @@ export manipulating_node
 #[
     TODO: improve custom errors
 ]#
-
-when isMainModule:
-    import mcmurrypkg/file2parser
-
-    echo "Hello world"

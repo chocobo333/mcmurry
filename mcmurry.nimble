@@ -6,8 +6,8 @@ description   = "A module for generating lexer/parser."
 license       = "MIT"
 srcDir        = "src"
 skipDirs      = @["tmp"]
-installExt    = @["nim"]
-bin           = @["mcmurry"]
+# installExt    = @["nim"]
+# bin           = @["mcmurry"]
 
 
 
