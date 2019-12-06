@@ -178,7 +178,7 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
         # if match("", re($e[0])):
         #     error "Lexer does not allowed regular expression that empty string matches.", e[0]
         # FIXME: using re, make pattern not allow empty.
-        letsec.add nnkIdentDefs.newTree(ident("re" & $pid & $i), newEmptyNode(), nnkCallStrLit.newTree(bindSym"re", e[0]))
+        letsec.add nnkIdentDefs.newTree(ident("re" & $pid & $i), newEmptyNode(), nnkCallStrLit.newTree(bindSym"re", e[0], nnkCurly.newTree(bindSym"reStudy", bindSym"reDotAll")))
     for i, e in annons:
         # TODO: implement pure re
         letsec.add nnkIdentDefs.newTree(ident("re" & $pid & "annon" & $i), newEmptyNode(), nnkCallStrLit.newTree(bindSym"re", e))
@@ -312,14 +312,15 @@ proc def_lexer(ids: seq[NimNode], body: NimNode, annons: seq[NimNode], tokens: s
     next[^1].add nnkElse.newTree(
         newStmtList(
             nnkRaiseStmt.newTree(
-                newCall(bindSym"newException", ident"TokenError", newLit"Unexpected characters.")
+                newCall(bindSym"newException", ident"TokenError", infix(newLit"Unexpected characters.", "&", nnkBracketExpr.newTree(newDotExpr(self_next, ident"program"), newDotExpr(self_next, ident"i"))))
             )
         )
     )
-    for e in directives["ignore"]:
-        next.add quote do:
-            if result.kind == `tkid`.`e`:
-                return `self_next`.next()
+    if "ignore" in directives:
+        for e in directives["ignore"]:
+            next.add quote do:
+                if result.kind == `tkid`.`e`:
+                    return `self_next`.next()
     
     # proc lex
     result.add quote do:
@@ -542,6 +543,8 @@ proc def_parser(ids: seq[NimNode], toplevel, body: NimNode, annons: seq[NimNode]
         rules.delete(k)
         i = 0
 
+    # echo rules
+
     # TODO: implement expansion of lr item set.
     var
         dfa = makeDFA(rules, toplevel)
@@ -633,7 +636,7 @@ proc def_parser(ids: seq[NimNode], toplevel, body: NimNode, annons: seq[NimNode]
         t_case.add nnkElse.newTree(
             newStmtList(
                 nnkRaiseStmt.newTree(
-                    newCall(bindSym"newException", ident"SyntaxError", newLit"Unexpected Token.")
+                    newCall(bindSym"newException", ident"SyntaxError", infix(infix(newLit"Unexpected Token.", "&", t), "&", newDotExpr(tk, ident"val")))
                 )
             )
         )

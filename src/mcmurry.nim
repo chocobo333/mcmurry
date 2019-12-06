@@ -114,12 +114,14 @@
     * variation of parser algorithm.
     * more predefined variables.
     * custom errors
+    * toJason
 
     :author: chocobo333
 ]##
 
 import mcmurry/ebnf2parser
 import mcmurry/manipulating_node
+# import mcmurry/compile
 
 export ebnf2parser
 export manipulating_node

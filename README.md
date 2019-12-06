@@ -178,6 +178,7 @@ Using ``macro`` and computing in ``macro``, using editor/pc may be busy.
 * variation of parser algorithm.
 * more predefined variables.
 * custom errors
+* toJason
 
 # License
 MIT License
