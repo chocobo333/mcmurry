@@ -7,12 +7,13 @@ type
 
     TokenKind {.pure.} = enum
         INT
+        FLOAT
 
     NodeKind {.pure.} = enum
         integer
         floating
 
-    Tree = ref object
+    TreeObj = object
         case kind: TreeKind
         of TK:
             val: string
@@ -20,6 +21,8 @@ type
             case tokenkind: TokenKind
             of INT:
                 tkintval: int
+            else:
+                discard
         of ND:
             children: seq[Tree]
             case nodekind: NodeKind
@@ -27,6 +30,7 @@ type
                 ndintval: int
             of floating:
                 floatval: float
+    Tree = ref TreeObj
 
 
 proc kind(self: Tree): TreeKind = self.kind
@@ -38,7 +42,8 @@ proc intval(self: Tree): auto =
         result = self.tkintval
     elif self.kind == ND:
         result = self.ndintval
-proc `inval=`(self: Tree, val: auto) =
+
+proc `intval=`(self: Tree, val: auto) =
     if self.kind == TK:
         self.tkintval = val
     elif self.kind == ND:
@@ -52,6 +57,38 @@ when isMainModule:
     echo sizeof(b[])
     echo a[]
     echo b[]
-    b.nodekind = floating
+    b = Tree(kind: ND, nodekind: floating)
     echo b[]
     echo b.nodekind
+    b.intval = 3
+
+    var
+        c: seq[string]
+    c.add "fff"
+
+when nimvm:
+    when nimvm:
+        discard
+    else:
+        echo "dd"
+else:
+    discard
+
+# when nimvm:
+#     import strutils
+#     when nimvm:
+#         import sequtils
+#     else:
+#         import sequtils
+# else:
+#     import strutils
+
+import macros
+dumpTree:
+    type
+        a = object
+            case tokenkind: TokenKind
+                    of INT:
+                        tkintval: int
+                    else:
+                        discard

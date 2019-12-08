@@ -15,3 +15,7 @@ skipDirs      = @["tmp"]
 
 requires "nim >= 1.0.4"
 requires "asciitype"
+
+# For compiling
+requires "ast_pattern_matching"
+requires "regex"

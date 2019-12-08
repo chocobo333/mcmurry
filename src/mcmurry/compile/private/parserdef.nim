@@ -51,8 +51,12 @@ export mcmurry
 #         directive:
 #             r"filename"
 #             r"toplevel"
+#             r"nodename
+#             r"tokenname"
+#             r"treename
 #             r"token"
 #             r"node"
+#             r"tree"
 #             r"ignore"
 #             r"nim"
 #     lexer:
@@ -118,31 +122,33 @@ template TokenKind*(typ: typedesc[Parser]): untyped =
 
 var nIndent: seq[int] = @[0]
 let
-    reParser0 = re"NIM:\n.*?END"
-    reParser1 = re"("")[^""\\]*(\\.[^""\\]*)*("")"
-    reParser2 = re"r("")[^\""]*(("")""[^\""]*)*("")"
-    reParser3 = re"[a-z][a-z_0-9]*"
-    reParser4 = re"[A-Z][A-Z0-9]*"
-    reParser5 = re"\n[ ]*"
-    reParser6 = re"\s+"
-    reParserannon0 = re"nim"
-    reParserannon1 = re"ignore"
-    reParserannon2 = re"node"
-    reParserannon3 = re"token"
-    reParserannon4 = re"toplevel"
-    reParserannon5 = re"filename"
-    reParserannon6 = re"="
-    reParserannon7 = re"%"
-    reParserannon8 = re"/"
-    reParserannon9 = re"\)"
-    reParserannon10 = re"\("
-    reParserannon11 = re"\*"
-    reParserannon12 = re"\+"
-    reParserannon13 = re"\|"
-    reParserannon14 = re"\]"
-    reParserannon15 = re"\["
-    reParserannon16 = re"->"
-    reParserannon17 = re":"
+    reParser0 = re(r"NIM:\n.*?END", {reStudy, reDotAll})
+    reParser1 = re(r"("")[^""\\]*(\\.[^""\\]*)*("")", {reStudy, reDotAll})
+    reParser2 = re(r"r("")[^\""]*(("")""[^\""]*)*("")", {reStudy, reDotAll})
+    reParser3 = re(r"[a-z][a-z_0-9]*", {reStudy, reDotAll})
+    reParser4 = re(r"[A-Z][A-Z0-9]*", {reStudy, reDotAll})
+    # reParser3 = re(r"[a-z0-9]*", {reStudy, reDotAll})
+    # reParser4 = re(r"[A-Z0-9]*", {reStudy, reDotAll})
+    reParser5 = re(r"\n[ ]*", {reStudy, reDotAll})
+    reParser6 = re(r"\s+", {reStudy, reDotAll})
+    reParserannon0 = re(r"nim", {reStudy, reDotAll})
+    reParserannon1 = re(r"ignore", {reStudy, reDotAll})
+    reParserannon2 = re(r"node", {reStudy, reDotAll})
+    reParserannon3 = re(r"token", {reStudy, reDotAll})
+    reParserannon4 = re(r"toplevel", {reStudy, reDotAll})
+    reParserannon5 = re(r"filename", {reStudy, reDotAll})
+    reParserannon6 = re(r"=", {reStudy, reDotAll})
+    reParserannon7 = re(r"%", {reStudy, reDotAll})
+    reParserannon8 = re(r"/", {reStudy, reDotAll})
+    reParserannon9 = re(r"\)", {reStudy, reDotAll})
+    reParserannon10 = re(r"\(", {reStudy, reDotAll})
+    reParserannon11 = re(r"\*", {reStudy, reDotAll})
+    reParserannon12 = re(r"\+", {reStudy, reDotAll})
+    reParserannon13 = re(r"\|", {reStudy, reDotAll})
+    reParserannon14 = re(r"\]", {reStudy, reDotAll})
+    reParserannon15 = re(r"\[", {reStudy, reDotAll})
+    reParserannon16 = re(r"->", {reStudy, reDotAll})
+    reParserannon17 = re(r":", {reStudy, reDotAll})
 var kind_stack: seq[ParserTokenKind] = @[]
 proc program*(self: Parser): string =
     self.program

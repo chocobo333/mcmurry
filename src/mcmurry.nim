@@ -115,6 +115,7 @@
     * more predefined variables.
     * custom errors
     * toJason
+    * genSym
 
     :author: chocobo333
 ]##

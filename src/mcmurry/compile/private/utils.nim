@@ -1,1 +1,3 @@
 
+import asciitype
+export asciitype

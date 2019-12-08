@@ -179,6 +179,7 @@ Using ``macro`` and computing in ``macro``, using editor/pc may be busy.
 * more predefined variables.
 * custom errors
 * toJason
+* genSym
 
 # License
 MIT License

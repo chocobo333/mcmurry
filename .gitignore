@@ -7,3 +7,6 @@ bin/
 
 # Nim's cache files
 nimcache/
+
+output.*
+parser.nim
