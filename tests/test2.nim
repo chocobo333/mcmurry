@@ -5,7 +5,8 @@ import mcmurry/compile
 
 
 Mcmurry:
-    %filename = parser
+    %filename = parserf
+    %parsername = Parser
     %toplevel = module
 
     %nodename = Node
@@ -58,7 +59,7 @@ Mcmurry:
     plus_expr:
         atom *(OP8 atom)
     atom:
-        NAME -> ident
+        r"[a-zA-Z_][a-zA-z_0-9]*" -> ident
         INT -> integer = NIM:
             result.intval = parseInt(children[0].val)
         END
@@ -70,8 +71,13 @@ Mcmurry:
 
     %nim = NIM:
         import strutils
-        var nIndent: seq[int] = @[0]
+        var
+            nIndent: seq[int] = @[0]
+            b_hoge: bool = false
+            n_foo = 3
     END
+
+    "fff" = FF
 
     r"[\+\-\*\/\^\=\~\>]+" = NIM:
         if str in ["+", "-"]:
@@ -105,13 +111,12 @@ Mcmurry:
         else:
             LF
     END
-    r"\s+" = SPACE
-    
-    %ignore = SPACE / COMMENT / SPACE
+    r"\s+" = SPACE  
+    %ignore = SPACE / COMMENT
     
 import os
 
 suite "mcmurry/compile":
     test "Create source file":
         require true
-        check existsFile("parser.nim")
+        check existsFile("parserf.nim")

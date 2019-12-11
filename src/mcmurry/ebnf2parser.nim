@@ -2,7 +2,7 @@
 import macros
 
 from sequtils import map, insert
-from strutils import `%`, escape, splitLines, center, replace, parseInt, startsWith
+from strutils import `%`, escape, splitLines, center, replace, parseInt, startsWith, repeat
 import re
 import tables
 
@@ -15,6 +15,17 @@ export core.`$`
 type
     TokenError* = object of Exception
     SyntaxError* = object of Exception
+
+
+proc raiseSyntaxError*(program: string, pos: int, msg: string = "") =
+    var
+        str: string = "\n"
+        n: int = min(pos, 5)
+    for i, c in program[max(pos-5, 0)..pos]:
+        if c == '\n':
+            n = min(pos, 5)-i-1
+    str &= "$1\n$2^\n" % @[program[max(pos-5, 0)..min(pos+5, program.len-1)], ' '.repeat(n)]
+    raise newException(SyntaxError, str & msg)
 
 
 proc find_annon_and_nodekind(body: var NimNode): (seq[NimNode], seq[NimNode]) =

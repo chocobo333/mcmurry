@@ -4,8 +4,9 @@ import os
 import
     strutils,
     sequtils,
-    algorithm
-    
+    algorithm,
+    strformat
+
 import
     sets,
     tables
@@ -15,14 +16,25 @@ import ast_pattern_matching
 
 import regex
 
-import private/utils
 import private/parserdef
+import private/core
 
 # export parserdef
 
 var parser = Parser()
 
 const license = staticRead("."/".."/".."/".."/"LICENSE")
+
+# TODO: fix
+proc raiseSyntaxError*(program: string, pos: int, msg: string = "") =
+    var
+        str: string = "\n"
+        n: int = min(pos, 5)
+    for i, c in program[max(pos-5, 0)..pos]:
+        if c == '\n':
+            n = min(pos, 5)-i-1
+    str &= "$1\n$2^\n" % @[program[max(pos-5, 0)..min(pos+5, program.len-1)], ' '.repeat(n)]
+    raise newException(SyntaxError, str & msg)
 
 
 template log(variable: untyped): untyped =
@@ -178,6 +190,10 @@ template log(variable: untyped): untyped =
 #     └---name@[[TOKENNAME: "SPACE"]]
 #     └---name@[[TOKENNAME: "COMMENT"]]
 
+template ladd(self: string, val: string) =
+    self.add val.indent(ind*spi) & lf
+
+
 proc compile_parser*(src: string, classname: openArray[string], typsec: string) =
     type
         N = Parser.Node
@@ -186,15 +202,26 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         TK = Parser.TokenKind
 
     let
-        nodetypename = classname[0]
-        tokentypename = classname[1]
-        treetypename = classname[2]
+        parsertypename = classname[0]
+        nodetypename = classname[1]
+        tokentypename = classname[2]
+        tokenkindtypename = tokentypename & "Kind"
+        treetypename = classname[3]
+        treekindtypename = treetypename & "Kind"
+
+        imports = ["mcmurry/compile/importance", "re", "strutils"]
 
     var
         ret: seq[string]
 
         lic: string
         input: string
+        typsec = typsec
+        imprtsec: string
+        nimsec: string
+        resec: string
+        lexerproc: string
+        parserproc: string
 
     block LICENCE:
         lic = "#[ LICENSE:\n"
@@ -208,50 +235,43 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         for e in src.splitLines:
             input.add "# $1\n" % [e]
         input.add "\n"
-        
-    #[
-        var
-            tokens: seq[string]
-            rules: seq[string]
 
-        Visitor(Parser, findtokenrule):
-            proc name(self: N) =
-                case self.tokens[0].kind
-                of TOKENNAME:
-                    tokens.add self.tokens[0].val
-                of RULENAME:
-                    rules.add self.tokens[0].val
-                else:
-                    assert false
-            proc tokendef(self: N) =
-                case self.tokens[1].kind
-                of TOKENNAME:
-                    tokens.add self.tokens[1].val
-                of NIMCODE:
-                    log self
-                else:
-                    assert false
-        discard findtokenrule(node)
-
-        log node
-        log tokens
-        log rules
-    ]#
-
+    let
+        lf = "\n"
+        indent = "\n    "
+        spi = 4
     var
         node = parser.parse(src).simplify()
         ind = 0
+        
 
         filename = ""
-        annons: HashSet[string]
+        str_annons: Table[string, int]
+        rstr_annons: Table[string, int]
+        str_token: seq[(string, T)]
+        rstr_token: seq[(string, T)]
+
+        ignores: seq[string]
+
+        rules: seq[Rule]
 
     Visitor(Parser, findannon):
         proc pattern(self: N) =
-            annons.incl self.tokens[0].val
+            let
+                b_str = self.tokens[0].kind == STR
+                key = self.tokens[0].val
+            if b_str:
+                if key notin str_annons:
+                    str_annons[key] = str_annons.len + rstr_annons.len
+            else:
+                if key notin rstr_annons:
+                    rstr_annons[key] = str_annons.len + rstr_annons.len
         proc name(self: N) =
             discard
 
     Visitor(Parser, visit):
+        var
+            cur_rule: seq[Rule]
         proc name(self: N) =
             discard
         proc magic(self: N) =
@@ -260,22 +280,213 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
             of "filename":
                 # name
                 filename = self.children[1].tokens[0].val
+            of "nim":
+                nimsec.add "\n"
+                for e in self.tokens[2].val.splitLines()[1..^2]:
+                    nimsec.add e.unindent(2) & "\n"
+                nimsec.add "\n"
+            of "ignore":
+                for e in self.children[1..^1]:
+                    ignores.add e.tokens[0].val
         proc ruledef(self: N) =
             discard self.findannon()
+            
+        proc tokendef(self: N) =
+            var
+                key = self.children[0].tokens[0]
+            if key.kind == STR:
+                for e in str_token:
+                    if e[0] == key.val:
+                        raise newException(SyntaxError, "A same pattern appears twice.")
+                str_token.add (key.val, self.tokens[1])
+            else:
+                for e in rstr_token:
+                    if e[0] == key.val:
+                        raise newException(SyntaxError, "A same pattern appears twice.")
+                rstr_token.add (key.val, self.tokens[1])
     discard node.visit()
 
-    ret.add lic         # add license
-    ret.add input       # add input
-    ret.add typsec      # add type section
+    block IMPRTSEC:
+        for e in imports:
+            imprtsec.add "import $1\n" % [e]
+        imprtsec.add "\n"
 
-    if filename == "":
-        stdout.write(ret)
-    else:
-        var
-            f = open((filename & ".nim"), fmWrite)
+    block TYPSEC:
         defer:
-            f.close()
-        f.write(ret)
+            typsec.add "\n"
+            ind = 0
+        typsec &= "\ntype\n"
+        ind = 1
+        typsec.add "$1* = ref object".indent(ind*4) % [parsertypename] & "\n"
+        ind += 1
+        typsec.ladd "i: int"
+        typsec.ladd "program: string"
+        typsec.ladd "programlen: int"
+        typsec.ladd "pos: (int, int)"
+        ind -= 1
+        ind -= 1
+        typsec.ladd fmt"tree2String({treetypename}, {tokentypename}, {nodetypename})"
+
+    block NIMSEC:
+        discard
+
+    block RESEC:
+        if rstr_annons.len == 0:
+            break
+        resec.add "let\n"
+        for key, value in rstr_annons:
+            resec.add "    reAnnon$1 = re($2)\n" % [$value, key]
+        resec.add "\n"
+        for i, e in rstr_token:
+            resec.add "    re$1 = re($2)\n" % [$i, e[0]]
+        resec.add "\n"
+
+    block LEXERPROC:
+        defer:
+            lexerproc.add "\n"
+            ind = 0
+        var
+            b_var = false
+            typ = re(r": [\w0-9_\[\]]+ = ")
+        lexerproc.add "var kind_stack: seq[$1] = @[]\n\n" % [tokenkindtypename]
+
+        # proc program (setter, getter)
+        lexerproc.add "proc program*(self: $1): string = self.program" % [parsertypename] & "\n"
+        lexerproc.add "proc `program=`*(self: $1, val: string) =\n" % [parsertypename]
+        lexerproc.add "    self.program = val\n"
+        lexerproc.add "    self.programlen = val.len\n"
+        lexerproc.add "    self.i = 0\n"
+        lexerproc.add "    self.pos = (1, 1)\n"
+        for e in nimsec.splitLines:
+            if e == "var":
+                b_var = true
+                continue
+            if b_var and e.startsWith("  "):
+                lexerproc.add e.replace(typ, " = ").indent(2) & "\n"
+            else:
+                b_var = false
+        lexerproc.add "\n"
+
+        lexerproc.add "proc next*(self: $1): $2 =\n" % [parsertypename, treetypename]
+        ind = 1
+        lexerproc.ladd fmt"if kind_stack.len != 0:{indent}return {treetypename}(kind: {tokentypename}, tokenkind: kind_stack.pop(), pos: self.pos)"
+        # lexerproc.add "var m: RegexMatch".indent(ind*4) & "\n"
+        lexerproc.ladd fmt"if self.i >= self.programlen:{indent}return {treetypename}(kind: {tokentypename}, tokenkind: {tokenkindtypename}.EOF, val: ""$"", pos: self.pos)"
+        for key, value in str_annons:
+            lexerproc.ladd fmt"elif self.program[self.i..^1].startsWith({key}):{indent}result = {treetypename}(kind: {tokentypename}, tokenkind: {tokenkindtypename}.ANNON{value}, val: {key}, pos: self.pos){lf}    self.pos[1] += {key.len-2}"
+        for key, value in rstr_annons:
+            lexerproc.ladd fmt"elif self.program.matchLen(reAnnon{value}, start=self.i) != -1:"
+            ind += 1
+            lexerproc.ladd "var"
+            ind += 1
+            lexerproc.ladd fmt"len: int = self.program.matchLen(reAnnon{value}, start=self.i)"
+            lexerproc.ladd fmt"str: string = self.program[self.i..self.i+len-1]"
+            lexerproc.ladd fmt"lines = splitLines(str)"
+            ind -= 1
+            lexerproc.ladd fmt"result = {treetypename}(kind: {tokentypename}, tokenkind: {tokenkindtypename}.ANNON{value}, val: str, pos: self.pos)"
+            lexerproc.ladd "self.i += len"
+            lexerproc.ladd "self.pos[0] += lines.len - 1"
+            lexerproc.ladd fmt"if lines.len == 1:{indent}self.pos[1] += len{lf}else:{indent}self.pos[1] = 1 + lines[^1].len"
+            ind -= 1
+        for i, e in str_token:
+            var
+                kind: string
+            if e[1].kind == TOKENNAME:
+                kind = e[1].val
+            elif e[1].kind == NIMCODE:
+                for e in e[1].val.splitLines()[1..^2]:
+                    kind &= e.unindent(2) & "\n"
+            lexerproc.ladd fmt"elif self.program[self.i..^1].startsWith({e[0]}):"
+            ind += 1
+            lexerproc.ladd "var"
+            ind += 1
+            lexerproc.ladd fmt"len: int = {e[0].len-2}"
+            lexerproc.ladd fmt"str: string = {e[0]}"
+            lexerproc.ladd fmt"lines = splitLines({e[0]})"
+            lexerproc.ladd fmt"kind = block:"
+            ind += 1
+            lexerproc.ladd kind
+            ind -= 1
+            ind -= 1
+            lexerproc.ladd fmt"result = {treetypename}(kind: {tokentypename}, tokenkind: kind, val: str, pos: self.pos)"
+            lexerproc.ladd "self.i += len"
+            lexerproc.ladd "self.pos[0] += lines.len - 1"
+            lexerproc.ladd fmt"if lines.len == 1:{indent}self.pos[1] += len{lf}else:{indent}self.pos[1] = 1 + lines[^1].len"
+            ind -= 1
+        for i, e in rstr_token:
+            var
+                kind: string
+            if e[1].kind == TOKENNAME:
+                kind = e[1].val
+            elif e[1].kind == NIMCODE:
+                for e in e[1].val.splitLines()[1..^2]:
+                    kind &= e.unindent(2) & "\n"
+            lexerproc.ladd fmt"elif self.program.matchLen(re{i}, start=self.i) != -1:"
+            ind += 1
+            lexerproc.ladd "var"
+            ind += 1
+            lexerproc.ladd fmt"len: int = self.program.matchLen(re{i}, start=self.i)"
+            lexerproc.ladd fmt"str: string = self.program[self.i..self.i+len-1]"
+            lexerproc.ladd fmt"lines = splitLines(str)"
+            lexerproc.ladd fmt"kind = block:"
+            ind += 1
+            lexerproc.ladd kind
+            ind -= 1
+            ind -= 1
+            lexerproc.ladd fmt"result = {treetypename}(kind: {tokentypename}, tokenkind: kind, val: str, pos: self.pos)"
+            lexerproc.ladd "self.i += len"
+            lexerproc.ladd "self.pos[0] += lines.len - 1"
+            lexerproc.ladd fmt"if lines.len == 1:{indent}self.pos[1] += len{lf}else:{indent}self.pos[1] = 1 + lines[^1].len"
+            ind -= 1
+        lexerproc.ladd fmt"else:{indent}raiseTokenError(self.program, self.pos, ""Unexpected characters."")"
+        var
+            ignore = block:
+                var
+                    ret = "{"
+                for i, e in ignores:
+                    ret.add (if i==0: "" else: ", ") & fmt"{tokenkindtypename}.{e}"
+                ret.add "}"
+                ret
+        if ignore != "{}":
+            lexerproc.ladd fmt"if result.tokenkind in {ignore}:{indent}return self.next()"
+        ind -= 1
+        lexerproc.add lf
+        lexerproc.ladd fmt"iterator lex*(self: {parsertypename}, program: string): {treetypename} ="
+        ind += 1
+        lexerproc.ladd "`program=`(self, program)"
+        lexerproc.ladd fmt"var ret: {treetypename}"
+        lexerproc.ladd "while true:"
+        ind += 1
+        lexerproc.ladd "ret = self.next"
+        lexerproc.ladd "yield ret"
+        lexerproc.ladd fmt"if ret.tokenkind == {tokenkindtypename}.EOF:{indent}break"
+        ind -= 1
+        ind -= 1
+
+    block PARSERPROC:
+        defer:
+            parserproc.add lf
+            ind = 0
+
+    block RETADD:
+        ret.add lic             # add license
+        ret.add input           # add input
+        ret.add imprtsec        # add import section
+        ret.add typsec          # add type section
+        ret.add nimsec          # add nim section
+        ret.add resec           # add regex section
+        ret.add lexerproc       # add lexer section
+        ret.add parserproc      # add parser section
+
+    block OUTPUT:
+        if filename == "":
+            stdout.write(ret)
+        else:
+            var
+                f = open((filename & ".nim"), fmWrite)
+            defer:
+                f.close()
+            f.write(ret)
 
 macro Mcmurry*(body: untyped): untyped =
     ##[
@@ -286,7 +497,7 @@ macro Mcmurry*(body: untyped): untyped =
     # echo repr body
     
     let
-        directives = ["filename", "toplevel", "node", "token", "nim", "ignore", "nodename", "tokenname", "treename"]
+        directives = ["filename", "toplevel", "node", "token", "nim", "ignore", "parsername", "nodename", "tokenname", "treename"]
         directives_allow_nim_code = ["node", "token", "tree", "nim"]
 
     # Checking structure of AST.
@@ -302,10 +513,11 @@ macro Mcmurry*(body: untyped): untyped =
         parsersec: seq[NimNode]
 
         rules: seq[NimNode] = @[newEmptyNode()]
-        tokens: seq[NimNode] = @[newEmptyNode()]
+        tokens: seq[NimNode] = @[newEmptyNode(), ident"EOF"]
 
         typsec = nnkTypeSection.newNimNode()
 
+        parsername = "Parser"
         nodename = "Node"
         tokenname = "Token"
         treename = "Tree"
@@ -313,11 +525,15 @@ macro Mcmurry*(body: untyped): untyped =
         delast: seq[int]
 
         annons: HashSet[string]
+
+        ignores: seq[NimNode]
     body.expectKind(nnkStmtList)
     for astind, ast in body:
         ast.matchAst(MatchingErrors):
         # magic
         of nnkAsgn(nnkPrefix(ident"%", `directive`@nnkIdent), `call`@{nnkIdent, nnkCall, nnkInfix}):
+            if b_nimcode:
+                error "`END` marker is needed.", directive
             if directive.strVal notin directives:
                 error "Allowed directives only are $1" % [$directives], directive
             # NIMCODE
@@ -346,6 +562,15 @@ macro Mcmurry*(body: untyped): untyped =
                 if err.kind != NoError:
                     if directive.strVal == "ignore":
                         call.expectKind(nnkInfix)
+                        call.matchAstRecursive:
+                        of `name`@nnkIdent:
+                            if name.strVal == "/":
+                                break
+                            var
+                                m: RegexMatch
+                            if not name.strVal.match(re(r"[A-Z][A-Z0-9]*"), m):
+                                error "Only token name can be placed here.", name
+                            ignores.add name
                     else:
                         error $err, call
                 else:
@@ -355,8 +580,11 @@ macro Mcmurry*(body: untyped): untyped =
                     of "toplevel":
                         discard
                     of "ignore":
-                        discard
+                        ignores.add call
                     # cut ast node.
+                    of "parsername":
+                        parsername = call.strVal
+                        delast.add astind
                     of "nodename":
                         nodename = call.strVal
                         delast.add astind
@@ -371,6 +599,8 @@ macro Mcmurry*(body: untyped): untyped =
                         assert false
         # tokendef
         of nnkAsgn({nnkStrLit, nnkRStrLit}, `call`@{nnkIdent, nnkCall}):
+            if b_nimcode:
+                error "`END` marker is needed.", ast
             case call.kind
             # TOKENNAME
             of nnkIdent:
@@ -378,6 +608,8 @@ macro Mcmurry*(body: untyped): untyped =
                     m: RegexMatch
                 if not call.strVal.match(re(r"[A-Z][A-Z0-9]*"), m):
                     error "Token name must consist of upper case character or number.", call
+                if call.strVal == "EOF":
+                    error "EOF is predefined.", call
                 tokens.add call
             # NIMCODE
             of nnkCall:
@@ -389,7 +621,9 @@ macro Mcmurry*(body: untyped): untyped =
                         var
                             m: RegexMatch
                         if tokenname.strVal.match(re(r"[A-Z][A-Z0-9]*"), m):
-                           tokens.add tokenname
+                            if tokenname.strVal == "EOF":
+                                error "EOF is predefined.", tokenname
+                            tokens.add tokenname
                     lexersec.add statement
                 else:
                     error $CallMatchingErrors[0], call
@@ -398,6 +632,8 @@ macro Mcmurry*(body: untyped): untyped =
                 assert false
         # ruledef
         of nnkCall(`rulename`@nnkIdent, `statement`@nnkStmtList):
+            if b_nimcode:
+                error "`END` marker is needed.", rulename
             var
                 m: RegexMatch
             if not rulename.strVal.match(re(r"[a-z][a-z_0-9]*"), m):
@@ -595,6 +831,10 @@ macro Mcmurry*(body: untyped): untyped =
         )
     )
 
+    for e in ignores:
+        if e notin tokens:
+            error "Undefined token.", e
+
     # for e in statement:
     #     e.matchAst(StatementMatchingErros):
     #     of nnkCall(`rulename`@nnkIdent, _):
@@ -616,7 +856,7 @@ macro Mcmurry*(body: untyped): untyped =
     # else:
     #     discard
     result = newStmtList()
-    result.add newCall(bindSym"compile_parser", newLit(repr(body)), newLit([nodename, tokenname, treename]), newLit(repr(typsec)))
+    result.add newCall(bindSym"compile_parser", newLit(repr(body)), newLit([parsername, nodename, tokenname, treename]), newLit(repr(typsec)))
 
     result.add nnkWhenStmt.newTree(
         nnkElifBranch.newTree(

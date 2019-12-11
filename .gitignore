@@ -10,3 +10,4 @@ nimcache/
 
 output.*
 parser.nim
+parserf.nim
