@@ -25,7 +25,7 @@ nimble install mcmurry
 * [Manipulating AST](#Manipulating-AST)
     * [Visitor](#Visitor)
     * [Transformer](#Transformer)
-* [Text file into parser source file](#Generate-from-Text-file)
+* [Compile parser](#Generate-parser-file)
 
 # Usage
 
@@ -113,6 +113,9 @@ var parser = Parser()
 echo parser.parse("3+4*2")
 ```
 
+**Note**:
+Using ``macro`` and computing in ``macro``, using editor/pc may be busy.
+
 # Reference
 
 ## Parser Reference
@@ -162,12 +165,15 @@ echo parser.parse("3+4*2")
 * #### **Transformer**
     * *Not Implemented.*
 
-# Generate from Text file
-You can make parser source file from text file without ``macro``.
+# Generate parser file
+You can make parser source file from nim's ``macro``.
+The ``macro`` is only used to check syntax erros. No computation is at compile-time, and source file is generated at run-time.
 In this way, your PC may be no louder than.
 
-**Note**:
-Using ``macro`` and computing in ``macro``, using editor/pc may be busy.
+Because I rewrote source code for this, the resulted data structure is not the same as through ``macro``.
+
+Here is **[Document](./compile.md)** for this.
+
 
 ## TODO
 * supporting ``|`` operator in the parser section.
