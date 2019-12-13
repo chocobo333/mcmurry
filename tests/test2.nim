@@ -23,7 +23,8 @@ Mcmurry:
 
     %treename = Tree
 
-    module: +statement
+    module:
+        +statement
     statement:
         simple_stmt
         compound_stmt
@@ -36,10 +37,13 @@ Mcmurry:
     compound_stmt:
         if_stmt
         while_stmt
+        for_stmt
     if_stmt:
         "if" expression ":" suite *("elif" expression ":" suite) ["else" ":" suite]
     while_stmt:
         "while" expression ":" suite
+    for_stmt:
+        "for" expression "in" expression ":" suite
     suite:
         simple_stmt
         INDENT +statement DEDENT
@@ -73,8 +77,6 @@ Mcmurry:
         import strutils
         var
             nIndent: seq[int] = @[0]
-            b_hoge: bool = false
-            n_foo = 3
     END
 
     "fff" = FF

@@ -5,7 +5,7 @@ In this way, your PC may be no louder than.
 
 Because I rewrote source code for this, the resulted data structure is not the same as through ``macro``.
 
-I implemented so roughly as to be done in one or two weeks. So, checking syntax errors is weak.
+I implemented so roughly. So, checking syntax errors is weak.
 
 # Contents
 * [Usage](#Usage)

@@ -11,7 +11,6 @@ import
     sets,
     tables
 
-import macros
 import ast_pattern_matching
 
 import regex
@@ -210,6 +209,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         treekindtypename = treetypename & "Kind"
 
         imports = ["mcmurry/compile/importance", "re", "strutils"]
+        exports = ["SyntaxError", "TokenError", "raiseTokenError"]
 
     var
         ret: seq[string]
@@ -246,6 +246,9 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         
 
         filename = ""
+
+        toplevel = ""
+
         str_annons: Table[string, int]
         rstr_annons: Table[string, int]
         str_token: seq[(string, T)]
@@ -254,6 +257,94 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         ignores: seq[string]
 
         rules: seq[Rule]
+        nrules: int
+        nannon: int
+        nimcodes: Table[int, seq[string]]
+
+    proc parse_rules(self: N): seq[seq[string]] =
+        case self.kind
+        of ruledef:
+            var
+                ret: seq[Rule]
+            for e in self.children:
+                var
+                    res = parse_rules(e)
+                for e in res:
+                    ret.add Rule(left: self.tokens[0].val, right: e)
+            rules.add ret
+        of ruleright:
+            var
+                alias: string
+                nimcode: seq[string]
+            for i, e in self.tokens:
+                if e.val == "->":
+                    alias = self.tokens[i+1].val
+                elif e.val == "=":
+                    nimcode = self.tokens[i+1].val.splitLines[1..^2]
+            result = @[newSeq[string]()]
+            for e in self.children:
+                var
+                    res = parse_rules(e)
+                    tmp = result
+                result = @[]
+                for e in tmp:
+                    for ee in res:
+                        result.add e & ee
+            if alias != "":
+                for e in result:
+                    rules.add Rule(left: alias, right: e)
+                result = @[@[alias]]
+        of pattern:
+            case self.tokens[0].kind
+            of STR:
+                result.add @[fmt"ANNON{str_annons[self.tokens[0].val]}"]
+            of RSTR:
+                result.add @[fmt"ANNON{rstr_annons[self.tokens[0].val]}"]
+            else:
+                raise newException(ValueError, "cannot reach.")
+        of NK.name:
+            result.add @[self.tokens[0].val]
+        of repeat_expr:
+            var
+                res = parse_rules(self.children[0])
+                ret: seq[Rule]
+                ann = fmt"annon{nannon}"
+                tmp = @[@[], @[ann]]
+            nannon += 1
+            for e in tmp:
+                for ee in res:
+                    ret.add Rule(left: ann, right: e & ee)
+            case self.tokens[0].val
+            of "*":
+                result = @[@[], @[ann]]
+            of "+":
+                result = @[@[ann]]
+            else:
+                raise newException(ValueError, "cannot reach.")
+            rules.add ret
+        of atom_expr:
+            result = @[newSeq[string]()]
+            for e in self.children:
+                var
+                    res = parse_rules(e)
+                    tmp = result
+                result = @[]
+                for e in tmp:
+                    for ee in res:
+                        result.add e & ee
+        of expression:
+            result = @[newSeq[string]()]
+            for e in self.children:
+                var
+                    res = parse_rules(e)
+                    tmp = result
+                result = @[]
+                for e in tmp:
+                    for ee in res:
+                        result.add e & ee
+            result.add @[]
+        else:
+            raise newException(ValueError, "cannot reach.")
 
     Visitor(Parser, findannon):
         proc pattern(self: N) =
@@ -280,6 +371,8 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
             of "filename":
                 # name
                 filename = self.children[1].tokens[0].val
+            of "toplevel":
+                toplevel = self.children[1].tokens[0].val
             of "nim":
                 nimsec.add "\n"
                 for e in self.tokens[2].val.splitLines()[1..^2]:
@@ -290,7 +383,8 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                     ignores.add e.tokens[0].val
         proc ruledef(self: N) =
             discard self.findannon()
-            
+            # TODO: parse rules
+            discard parse_rules(self)
         proc tokendef(self: N) =
             var
                 key = self.children[0].tokens[0]
@@ -305,11 +399,24 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                         raise newException(SyntaxError, "A same pattern appears twice.")
                 rstr_token.add (key.val, self.tokens[1])
     discard node.visit()
+    echo rules
+    echo nimcodes
+
+    var
+        dfa = makeDFA(rules, toplevel)
+    block:
+        var f = open("output.csv", fmWrite)
+        defer:
+            f.close()
+        f.write(dfa.table)
 
     block IMPRTSEC:
         for e in imports:
-            imprtsec.add "import $1\n" % [e]
-        imprtsec.add "\n"
+            imprtsec.ladd fmt"import {e}"
+        imprtsec.add lf
+        for e in exports:
+            imprtsec.ladd fmt"export {e}"
+        imprtsec.add lf
 
     block TYPSEC:
         defer:
@@ -488,6 +595,8 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                 f.close()
             f.write(ret)
 
+import macros
+
 macro Mcmurry*(body: untyped): untyped =
     ##[
         This macro does not create a parser at compile-time but does a source file of the parser module.
@@ -524,6 +633,7 @@ macro Mcmurry*(body: untyped): untyped =
 
         delast: seq[int]
 
+        used_rule: seq[NimNode]
         annons: HashSet[string]
 
         ignores: seq[NimNode]
@@ -646,10 +756,24 @@ macro Mcmurry*(body: untyped): untyped =
                 rules.add rule_name2
             # = NIMCODE
             statement.matchAstRecursive:
+            of `e`@ident"END":
+                if b_nimcode:
+                    b_nimcode = false
+                else:
+                    error "`END` markar must be after NIM block.", e
             of nnkCall(ident"NIM", `statement2`@nnkStmtList):
                 parsersec.add statement2
+                b_nimcode = true
+            of `rule`@nnkIdent:
+                var
+                    m: RegexMatch
+                if rule.strVal.match(re(r"[a-z][a-z_0-9]*"), m):
+                    if (not b_nimcode) and rule notin used_rule:
+                        used_rule.add rule
             of `annon`@{nnkStrLit, nnkRStrLit}:
                 annons.incl annon.strVal
+            if b_nimcode:
+                error "`END` is needed after NIM block.", ast
         # `END` marker
         of ident"END":
             let err = ast.matchIdent("END")
@@ -691,6 +815,11 @@ macro Mcmurry*(body: untyped): untyped =
                 e
             )
         )
+
+    # check existance of used rules
+    for e in used_rule:
+        if e notin rules:
+            error "Undefined rule.", e
     
     # tokentype: NimNode
     # nodetype: NimNode
