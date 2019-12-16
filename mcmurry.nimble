@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.3"
+version       = "0.2.0"
 author        = "chocobo333"
 description   = "A module for generating lexer/parser."
 license       = "MIT"
@@ -19,3 +19,4 @@ requires "asciitype"
 # For compiling
 requires "ast_pattern_matching"
 requires "regex"
+# requires "timeit"

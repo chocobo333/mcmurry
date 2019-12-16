@@ -4,6 +4,8 @@ This module provides ebnf lexer/parser generator and a way to manipulate AST; Ab
 
 The parser generator is implemented as a macro.
 
+**Note**: I recommend [to generate parser file](#Generate-parser-file).
+
 #  Contents
 * [Installation](#Installation)
 * [Document](#Document)

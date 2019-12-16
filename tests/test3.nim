@@ -22,3 +22,7 @@ suite "mcmurry/compile":
 
         for e in parser.lex("34 + 55\n 1+2\n3+3\n55\n"):
             echo e
+
+        var
+            ast = parser.parse("34 + 55")
+        echo ast

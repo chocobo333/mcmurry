@@ -26,16 +26,16 @@ proc toRule*(self: seq[string]): Rule =
     result.left = self[0]
     result.right = self[1..^1]
 
-const top = "top$"
-const eof = "EOF"
+const top* = "top$"
+const eof* = "EOF"
 
 type
     LRItem* = object
-        rule: Rule
-        index: int
-        la: HashSet[string]
+        rule*: Rule
+        index*: int
+        la*: HashSet[string]
     LRItemSet* = seq[LRItem]
-    Edge = (int, int, string)
+    Edge* = (int, int, string)
     DFA* = object
         nodes*: seq[LRItemSet]
         edges*: seq[Edge]
@@ -262,4 +262,5 @@ proc makeDFA*(rules: seq[Rule], toplevel: string): DFA =
     result.nodes.add @[LRItem(rule: Rule(left: top, right: @[$toplevel]), la: toHashSet([eof]))]
 
     expansion(result)
+    # echo first("module")
     

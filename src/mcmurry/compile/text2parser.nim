@@ -17,6 +17,7 @@ import regex
 
 import private/parserdef
 import private/core
+import private/utils
 
 # export parserdef
 
@@ -192,6 +193,15 @@ template log(variable: untyped): untyped =
 template ladd(self: string, val: string) =
     self.add val.indent(ind*spi) & lf
 
+template section(name: untyped, body: untyped) =
+    block name:
+        let
+            pind = ind
+        defer:
+            ind = pind
+        body
+    
+
 
 proc compile_parser*(src: string, classname: openArray[string], typsec: string) =
     type
@@ -203,13 +213,14 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
     let
         parsertypename = classname[0]
         nodetypename = classname[1]
+        nodekindtypename = nodetypename & "Kind"
         tokentypename = classname[2]
         tokenkindtypename = tokentypename & "Kind"
         treetypename = classname[3]
         treekindtypename = treetypename & "Kind"
 
-        imports = ["mcmurry/compile/importance", "re", "strutils"]
-        exports = ["SyntaxError", "TokenError", "raiseTokenError"]
+        imports = ["mcmurry/compile/importance", "re", "strutils", "sequtils"]
+        exports = ["SyntaxError", "TokenError", "raiseTokenError", "raiseSyntaxError"]
 
     var
         ret: seq[string]
@@ -257,8 +268,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         ignores: seq[string]
 
         rules: seq[Rule]
-        nrules: int
-        nannon: int
+        annon_rules: seq[seq[seq[string]]]
         nimcodes: Table[int, seq[string]]
 
     proc parse_rules(self: N): seq[seq[string]] =
@@ -308,12 +318,19 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
             var
                 res = parse_rules(self.children[0])
                 ret: seq[Rule]
+                nannon = annon_rules.len
+            if res in annon_rules:
+                nannon = annon_rules.find(res)
+            else:
+                annon_rules.add res
+                var
+                    ann = fmt"annon{nannon}"
+                    tmp = @[@[], @[ann]]
+                for e in tmp:
+                    for ee in res:
+                        ret.add Rule(left: ann, right: e & ee)
+            var
                 ann = fmt"annon{nannon}"
-                tmp = @[@[], @[ann]]
-            nannon += 1
-            for e in tmp:
-                for ee in res:
-                    ret.add Rule(left: ann, right: e & ee)
             case self.tokens[0].val
             of "*":
                 result = @[@[], @[ann]]
@@ -399,8 +416,8 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                         raise newException(SyntaxError, "A same pattern appears twice.")
                 rstr_token.add (key.val, self.tokens[1])
     discard node.visit()
-    echo rules
-    echo nimcodes
+    # echo rules
+    # echo nimcodes
 
     var
         dfa = makeDFA(rules, toplevel)
@@ -409,6 +426,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         defer:
             f.close()
         f.write(dfa.table)
+        # echo dfa
 
     block IMPRTSEC:
         for e in imports:
@@ -432,6 +450,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         typsec.ladd "pos: (int, int)"
         ind -= 1
         ind -= 1
+        typsec.add lf
         typsec.ladd fmt"tree2String({treetypename}, {tokentypename}, {nodetypename})"
 
     block NIMSEC:
@@ -574,6 +593,86 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         defer:
             parserproc.add lf
             ind = 0
+        ind = 0
+        parserproc.ladd fmt"proc parse*(self: {parsertypename}, src: string): {treetypename} ="
+        ind += 1
+        # var section
+        section varsec:
+            parserproc.ladd "var"
+            ind += 1
+            parserproc.ladd "stack: seq[int] = @[0]"
+            parserproc.ladd fmt"retstack: seq[{treetypename}]"
+
+        # make dfa code.
+        block makedfa:
+            parserproc.ladd "for tk in self.lex(src):"
+            ind += 1
+            section varsec:
+                parserproc.ladd "var"
+                ind += 1
+                parserproc.ladd "t = $tk.tokenkind"
+                parserproc.ladd "tmpt = $tk.tokenkind"
+
+            parserproc.ladd "while true:"
+            ind += 1
+            parserproc.ladd "case stack[^1]"
+            for i, node in dfa.nodes:
+                section outerof:
+                    parserproc.ladd fmt"of {i}:"
+                    ind += 1
+                    parserproc.ladd "case t"
+                    # shift and goto
+                    for edge in filter(dfa.edges, proc(self: Edge): bool = self[0] == i):
+                        var
+                            key = edge[2]
+                            op = key.isUpper(true)
+                        if op:
+                            section innerof:
+                                parserproc.ladd fmt"of ""{key}"":"
+                                ind += 1
+                                parserproc.ladd fmt"stack.add {edge[1]}"
+                                parserproc.ladd fmt"retstack.add tk"
+                                parserproc.ladd "break"
+                        else:
+                            section innerof:
+                                parserproc.ladd fmt"of ""{key}"":"
+                                ind += 1
+                                parserproc.ladd fmt"stack.add {edge[1]}"
+                                parserproc.ladd fmt"t = tmpt"
+                    # reduce                   
+                    for item in filter(node, proc(self: LRItem): bool = self.rule.right.len == self.index):
+                        if item.rule.left == top:
+                            section innerof:
+                                parserproc.ladd fmt"of ""{eof}"":"
+                                ind += 1
+                                parserproc.ladd "break"
+                            continue
+                        var
+                            ofs = '"' & join(toSeq(item.la), "\", \"") & '"'
+                        section innerof:
+                            parserproc.ladd fmt"of {ofs}:"
+                            ind += 1
+                            if item.rule.left.startsWith("annon"):
+                                parserproc.ladd fmt"result = {treetypename}(kind: {nodetypename})"
+                            else:
+                                parserproc.ladd fmt"result = {treetypename}(kind: {nodetypename}, nodekind: {nodekindtypename}.{item.rule.left})"
+                            for e in item.rule.right:
+                                parserproc.ladd "discard stack.pop()"
+                                if e.startsWith("annon"):
+                                    parserproc.ladd "result.children.insert retstack.pop.children, 0"
+                                else:
+                                    parserproc.ladd "result.children.insert retstack.pop, 0"
+                            parserproc.ladd "retstack.add result"
+                            parserproc.ladd "tmpt = t"
+                            parserproc.ladd fmt"t = ""{item.rule.left}"""
+                    section elsesec:
+                        parserproc.ladd "else:"
+                        ind += 1
+                        parserproc.ladd "raiseSyntaxError(src, tk.pos, \"Unexpected token. : \" & $tk)"
+            section elsesec:
+                parserproc.ladd "else:"
+                ind += 1
+                parserproc.ladd "raiseSyntaxError(src, tk.pos, \"Unreachable. : \" & $tk)"
 
     block RETADD:
         ret.add lic             # add license
@@ -634,6 +733,7 @@ macro Mcmurry*(body: untyped): untyped =
         delast: seq[int]
 
         used_rule: seq[NimNode]
+        used_token: seq[NimNode]
         annons: HashSet[string]
 
         ignores: seq[NimNode]
@@ -767,9 +867,13 @@ macro Mcmurry*(body: untyped): untyped =
             of `rule`@nnkIdent:
                 var
                     m: RegexMatch
-                if rule.strVal.match(re(r"[a-z][a-z_0-9]*"), m):
-                    if (not b_nimcode) and rule notin used_rule:
-                        used_rule.add rule
+                if not b_nimcode:
+                    if rule.strVal.match(re(r"[a-z][a-z_0-9]*"), m):
+                        if rule notin used_rule:
+                            used_rule.add rule
+                    elif rule.strval.match(re(r"[A-Z][A-Z0-9]*"), m):
+                        if rule notin used_token:
+                            used_token.add rule
             of `annon`@{nnkStrLit, nnkRStrLit}:
                 annons.incl annon.strVal
             if b_nimcode:
@@ -816,10 +920,13 @@ macro Mcmurry*(body: untyped): untyped =
             )
         )
 
-    # check existance of used rules
+    # check existance of used rules and tokens
     for e in used_rule:
         if e notin rules:
             error "Undefined rule.", e
+    for e in used_token:
+        if e notin tokens:
+            error "Undefined token.", e
     
     # tokentype: NimNode
     # nodetype: NimNode

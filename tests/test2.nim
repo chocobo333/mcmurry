@@ -32,23 +32,26 @@ Mcmurry:
     simple_stmt:
         small_stmt *(";" small_stmt)
     small_stmt:
-        pass_stmt
         expr_stmt
+        "pass" -> pass_stmt
+        "break" -> break_stmt
+        "continue" -> continue_stmt
     compound_stmt:
         if_stmt
         while_stmt
         for_stmt
+        block_stmt
     if_stmt:
         "if" expression ":" suite *("elif" expression ":" suite) ["else" ":" suite]
     while_stmt:
         "while" expression ":" suite
     for_stmt:
         "for" expression "in" expression ":" suite
+    block_stmt:
+        "block" ident ":" suite
     suite:
         simple_stmt
         INDENT +statement DEDENT
-    pass_stmt:
-        "pass"
     expr_stmt:
         simple_expr
     expression:
@@ -67,6 +70,7 @@ Mcmurry:
         INT -> integer = NIM:
             result.intval = parseInt(children[0].val)
         END
+        STRING
         "true" -> true
         "false" -> false
         "(" expression ")"
@@ -78,8 +82,6 @@ Mcmurry:
         var
             nIndent: seq[int] = @[0]
     END
-
-    "fff" = FF
 
     r"[\+\-\*\/\^\=\~\>]+" = NIM:
         if str in ["+", "-"]:
