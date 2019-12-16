@@ -22,7 +22,7 @@ I implemented so roughly. So, checking syntax errors is weak.
 I wrote some test codes.
 See [them](./tests/).
 
-2 and 3 are samples of `Generating source file`.
+[*test2.nim*](./tests/test2.nim) and [*test3.nim*](./tests/test3.nim) are samples of `Generating source file`.
 
 # Usage
 At first,
