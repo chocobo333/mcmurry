@@ -8,6 +8,7 @@ Because I rewrote source code for this, the resulted data structure is not the s
 I implemented so roughly. So, checking syntax errors is weak.
 
 # Contents
+* [Example](#Example)
 * [Usage](#Usage)
 * [Magic](#Magic)
 * [NIMCODE block](#NIMCODE-block)
@@ -16,6 +17,12 @@ I implemented so roughly. So, checking syntax errors is weak.
     * [Rule](#Definition-of-rule)
 * [Reference](#Reference)
 * [TODO](#TODO)
+
+# Example
+I wrote some test codes.
+See [them](./tests/).
+
+2 and 3 are samples of `Generating source file`.
 
 # Usage
 At first,
