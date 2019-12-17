@@ -50,7 +50,19 @@ template tree2String*(treename: untyped, tokenname, nodename: untyped) =
         elif tr.kind == nodename:
             result = `nodename String`(tr)
 
-template node_utils*(treename: untyped) =
-    proc simplify(self: `treename`): `treename` =
-        discard
+template node_utils*(treename: untyped, tokenname, nodename: untyped) =
+    proc simplify*(self: `treename`): `treename` =
+        ##[
+            Simplify tree node.
+            Nodes that have only one child and no tokens are removed through this proc.
+            And then, return simplified node.
+        ]##
+        if self.kind == `tokenname`:
+            return self
+        for i, e in self.children:
+            self.children[i] = simplify(e)
+        if self.children.len == 1:
+            return self.children[0]
+        else:
+            return self
     

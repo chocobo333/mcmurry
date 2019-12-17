@@ -317,7 +317,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         ind -= 1
         typsec.add lf
         typsec.ladd fmt"tree2String({treetypename}, {tokentypename}, {nodetypename})"
-        typsec.ladd fmt"node_utils({treetypename})"
+        typsec.ladd fmt"node_utils({treetypename}, {tokentypename}, {nodetypename})"
 
     block NIMSEC:
         discard
@@ -525,7 +525,9 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                                 parserproc.ladd fmt"result = {treetypename}(kind: {nodetypename})"
                             else:
                                 parserproc.ladd fmt"result = {treetypename}(kind: {nodetypename}, nodekind: {nodekindtypename}.{item.rule.left})"
-                            for e in item.rule.right:
+                            for i in countdown(item.rule.right.len-1, 0):
+                                var
+                                    e = item.rule.right[i]
                                 parserproc.ladd "discard stack.pop()"
                                 if e.startsWith("annon"):
                                     parserproc.ladd "result.children.insert retstack.pop.children, 0"
