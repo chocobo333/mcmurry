@@ -23,172 +23,33 @@ import private/utils
 
 var parser = Parser()
 
-const license = staticRead("."/".."/".."/".."/"LICENSE")
+const license = """
+MIT License
 
-# TODO: fix
-proc raiseSyntaxError*(program: string, pos: int, msg: string = "") =
-    var
-        str: string = "\n"
-        n: int = min(pos, 5)
-    for i, c in program[max(pos-5, 0)..pos]:
-        if c == '\n':
-            n = min(pos, 5)-i-1
-    str &= "$1\n$2^\n" % @[program[max(pos-5, 0)..min(pos+5, program.len-1)], ' '.repeat(n)]
-    raise newException(SyntaxError, str & msg)
+Copyright (c) 2019 chocobo333
 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+"""
 
 template log(variable: untyped): untyped =
     stderr.write astToStr(variable) & ":\n" & ($variable).indent(4) & "\n"
-
-
-# module@[]
-# └---statement@[[   LF    : "\x0A"]]
-# └---magic@[[ ANNON7  : "%"], [ ANNON6  : "="]]
-#     └---directive@[[ ANNON5  : "filename"]]
-#     └---name@[[RULENAME : "parser"]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---magic@[[ ANNON7  : "%"], [ ANNON6  : "="]]
-#     └---directive@[[ ANNON4  : "toplevel"]]
-#     └---name@[[RULENAME : "module"]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---magic@[[ ANNON7  : "%"], [ ANNON6  : "="], [ NIMCODE : "NIM:\x0A  integer:\x0A    intval:\x0A      int\x0AEND"]]
-#     └---directive@[[ ANNON2  : "node"]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---magic@[[ ANNON7  : "%"], [ ANNON6  : "="], [ NIMCODE : "NIM:\x0A  INT:\x0A    intval:\x0A      int\x0AEND"]]
-#     └---directive@[[ ANNON3  : "token"]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---ruledef@[[RULENAME : "module"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---repeat_expr@[[ ANNON12 : "+"]]
-#         └---name@[[RULENAME : "statement"]]
-# └---ruledef@[[RULENAME : "statement"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [   LF    : "\x0A  "], [   LF    : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---name@[[RULENAME : "simple_stmt"]]
-#     └---name@[[RULENAME : "compound_stmt"]]
-#     └---name@[[TOKENNAME: "LF"]]
-# └---ruledef@[[RULENAME : "simple_stmt"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---ruleright@[]
-#         └---name@[[RULENAME : "small_stmt"]]
-#         └---repeat_expr@[[ ANNON11 : "*"]]
-#             └---atom_expr@[[ ANNON10 : "("], [ ANNON9  : ")"]]
-#                 └---pattern@[[   STR   : "\";\""]]
-#                 └---name@[[RULENAME : "small_stmt"]]
-# └---ruledef@[[RULENAME : "small_stmt"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [   LF    : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---name@[[RULENAME : "pass_stmt"]]
-#     └---name@[[RULENAME : "expr_stmt"]]
-# └---ruledef@[[RULENAME : "compound_stmt"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [   LF    : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---name@[[RULENAME : "if_stmt"]]
-#     └---name@[[RULENAME : "while_stmt"]]
-# └---ruledef@[[RULENAME : "if_stmt"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---ruleright@[]
-#         └---pattern@[[   STR   : "\"if\""]]
-#         └---name@[[RULENAME : "expression"]]
-#         └---pattern@[[   STR   : "\":\""]]
-#         └---name@[[RULENAME : "suite"]]
-#         └---repeat_expr@[[ ANNON11 : "*"]]
-#             └---atom_expr@[[ ANNON10 : "("], [ ANNON9  : ")"]]
-#                 └---pattern@[[   STR   : "\"elif\""]]
-#                 └---name@[[RULENAME : "expression"]]
-#                 └---pattern@[[   STR   : "\":\""]]
-#                 └---name@[[RULENAME : "suite"]]
-#         └---expression@[[ ANNON15 : "["], [ ANNON14 : "]"]]
-#             └---pattern@[[   STR   : "\"else\""]]
-#             └---pattern@[[   STR   : "\":\""]]
-#             └---name@[[RULENAME : "suite"]]
-# └---ruledef@[[RULENAME : "while_stmt"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---ruleright@[]
-#         └---pattern@[[   STR   : "\"while\""]]
-#         └---name@[[RULENAME : "expression"]]
-#         └---pattern@[[   STR   : "\":\""]]
-#         └---name@[[RULENAME : "suite"]]
-# └---ruledef@[[RULENAME : "suite"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [   LF    : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---name@[[RULENAME : "simple_stmt"]]
-#     └---ruleright@[]
-#         └---name@[[TOKENNAME: "INDENT"]]
-#         └---repeat_expr@[[ ANNON12 : "+"]]
-#             └---name@[[RULENAME : "statement"]]
-#         └---name@[[TOKENNAME: "DEDENT"]]
-# └---ruledef@[[RULENAME : "pass_stmt"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---pattern@[[   STR   : "\"pass\""]]
-# └---ruledef@[[RULENAME : "expr_stmt"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---name@[[RULENAME : "simple_expr"]]
-# └---ruledef@[[RULENAME : "expression"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [   LF    : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---name@[[RULENAME : "simple_expr"]]
-#     └---name@[[RULENAME : "if_expr"]]
-# └---ruledef@[[RULENAME : "simple_expr"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---name@[[RULENAME : "arrow_expr"]]
-# └---ruledef@[[RULENAME : "arrow_expr"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---ruleright@[]
-#         └---name@[[RULENAME : "assign_expr"]]
-#         └---repeat_expr@[[ ANNON11 : "*"]]
-#             └---atom_expr@[[ ANNON10 : "("], [ ANNON9  : ")"]]
-#                 └---name@[[TOKENNAME: "OP0"]]
-#                 └---name@[[RULENAME : "assign_expr"]]
-# └---ruledef@[[RULENAME : "assign_expr"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---ruleright@[]
-#         └---name@[[RULENAME : "plus_expr"]]
-#         └---repeat_expr@[[ ANNON11 : "*"]]
-#             └---atom_expr@[[ ANNON10 : "("], [ ANNON9  : ")"]]
-#                 └---name@[[TOKENNAME: "OP1"]]
-#                 └---name@[[RULENAME : "plus_expr"]]
-# └---ruledef@[[RULENAME : "plus_expr"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---ruleright@[]
-#         └---name@[[RULENAME : "atom"]]
-#         └---repeat_expr@[[ ANNON11 : "*"]]
-#             └---atom_expr@[[ ANNON10 : "("], [ ANNON9  : ")"]]
-#                 └---name@[[TOKENNAME: "OP8"]]
-#                 └---name@[[RULENAME : "atom"]]
-# └---ruledef@[[RULENAME : "atom"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [   LF    : "\x0A  "], [   LF    : "\x0A  "], [   LF    : "\x0A  "], [   LF    : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---ruleright@[[ ANNON16 : "->"], [RULENAME : "ident"]]
-#         └---name@[[TOKENNAME: "NAME"]]
-#     └---ruleright@[[ ANNON16 : "->"], [RULENAME : "integer"], [ ANNON6  : "="], [ NIMCODE : "NIM:\x0A    result.intval = parseInt([0].val)\x0A  END"]]
-#         └---name@[[TOKENNAME: "INT"]]
-#     └---ruleright@[[ ANNON16 : "->"], [RULENAME : "true"]]
-#         └---pattern@[[   STR   : "\"true\""]]
-#     └---ruleright@[[ ANNON16 : "->"], [RULENAME : "false"]]
-#         └---pattern@[[   STR   : "\"false\""]]
-#     └---ruleright@[]
-#         └---pattern@[[   STR   : "\"(\""]]
-#         └---name@[[RULENAME : "expression"]]
-#         └---pattern@[[   STR   : "\")\""]]
-# └---ruledef@[[RULENAME : "if_expr"], [ ANNON17 : ":"], [ INDENT  : "\x0A  "], [ DEDENT  : "\x0A"]]
-#     └---ruleright@[]
-#         └---pattern@[[   STR   : "\"if\""]]
-#         └---name@[[RULENAME : "expression"]]
-#         └---pattern@[[   STR   : "\":\""]]
-#         └---name@[[RULENAME : "expression"]]
-#         └---pattern@[[   STR   : "\"else\""]]
-#         └---pattern@[[   STR   : "\":\""]]
-#         └---name@[[RULENAME : "expression"]]
-# └---magic@[[ ANNON7  : "%"], [ ANNON6  : "="], [ NIMCODE : "NIM:\x0A  import\x0A    strutils\x0A\x0A  var nIndent: seq[int] = @[0]\x0AEND"]]
-#     └---directive@[[ ANNON0  : "nim"]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---tokendef@[[ ANNON6  : "="], [ NIMCODE : "NIM:\x0A  if str in [\"aa\"]:\x0A    aiueo\x0A  TOKEN\x0AEND"], [   LF    : "\x0A"]]
-#     └---pattern@[[   STR   : "\"aa\""]]
-# └---tokendef@[[ ANNON6  : "="], [ NIMCODE : "NIM:\x0A  if str in [\"+\", \"-\"]:\x0A    OP8\x0A  elif str in [\"==\", \"<=\", \">=\", \"<\", \">\"]:\x0A    OP5\x0A  elif str.endsWith(\"=\"):\x0A    OP1\x0A  elif str == \"=>\" or str == \"->\":\x0A    OP0\x0A  else:\x0A    OP10\x0AEND"], [   LF    : "\x0A"]]
-#     └---pattern@[[  RSTR   : "r\"[\\+\\-\\*\\/\\^\\=\\~\\>]+\""]]
-# └---tokendef@[[ ANNON6  : "="], [TOKENNAME: "NAME"]]
-#     └---pattern@[[  RSTR   : "r\"[a-zA-Z_][a-zA-z_0-9]*\""]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---tokendef@[[ ANNON6  : "="], [TOKENNAME: "INT"]]
-#     └---pattern@[[  RSTR   : "r\"[1-9][0-9]*\""]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---tokendef@[[ ANNON6  : "="], [TOKENNAME: "STRING"]]
-#     └---pattern@[[  RSTR   : "r\"(\"\")[^\"\"\\\\]*(\\\\.[^\"\"\\\\]*)*(\"\")\""]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---tokendef@[[ ANNON6  : "="], [TOKENNAME: "DOCSTR"]]
-#     └---pattern@[[  RSTR   : "r\"\\n?\\s*##[^\\n]*\""]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---tokendef@[[ ANNON6  : "="], [TOKENNAME: "COMMENT"]]
-#     └---pattern@[[  RSTR   : "r\"\\n?\\s*#[^\\n]*\""]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---tokendef@[[ ANNON6  : "="], [ NIMCODE : "NIM:\x0A  if len - 1 > nIndent[^1]:\x0A    nIndent.add len - 1\x0A    INDENT\x0A  elif len - 1 < nIndent[^1]:\x0A    while len - 1 != nIndent[^1]:\x0A      discard nIndent.pop()\x0A      kind_stack.add DEDENT\x0A      if nIndent.len == 0:\x0A        raise newException(SyntaxError, \"Invalid indent.\")\x0A    discard kind_stack.pop()\x0A    DEDENT\x0A  else:\x0A    LF\x0AEND"], [   LF    : "\x0A"]]
-#     └---pattern@[[  RSTR   : "r\"\\n[ ]*\""]]
-# └---tokendef@[[ ANNON6  : "="], [TOKENNAME: "SPACE"]]
-#     └---pattern@[[  RSTR   : "r\"\\s+\""]]
-# └---statement@[[   LF    : "\x0A"]]
-# └---magic@[[ ANNON7  : "%"], [ ANNON6  : "="], [ ANNON8  : "/"]]
-#     └---directive@[[ ANNON1  : "ignore"]]
-#     └---name@[[TOKENNAME: "SPACE"]]
-#     └---name@[[TOKENNAME: "COMMENT"]]
 
 template ladd(self: string, val: string) =
     self.add val.indent(ind*spi) & lf
