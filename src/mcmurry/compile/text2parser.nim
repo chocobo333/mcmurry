@@ -318,7 +318,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         discard
 
     block RESEC:
-        if rstr_annons.len == 0:
+        if rstr_annons.len == 0 and rstr_token.len == 0:
             break
         resec.add "let\n"
         for key, value in rstr_annons:
@@ -838,7 +838,6 @@ macro Mcmurry*(body: untyped): untyped =
     # Token
     var
         token_rec = nnkRecList.newTree(
-            # newIdentDefs(ident"tokenkind", ident(tokenname & "Kind")),
             newIdentDefs(ident"val", bindSym"string"),
             newIdentDefs(ident"pos", nnkPar.newTree(bindSym"int", bindSym"int"))
         )
@@ -868,11 +867,13 @@ macro Mcmurry*(body: untyped): untyped =
                 error $TokenMatchingError[0], e
         token_reccase.add nnkElse.newTree(nnkRecList.newTree(newNilLit()))
         token_rec.add token_reccase
+    else:
+        token_rec.add newIdentDefs(ident"tokenkind", ident(tokenname & "Kind"))
+
 
     # Node
     var
         node_rec = nnkRecList.newTree(
-            # newIdentDefs(ident"nodekind", ident(nodename & "Kind")),
             newIdentDefs(ident"children", nnkBracketExpr.newTree(bindSym"seq", ident(treename)))
             # newIdentDefs(ident"pos", nnkPar.newTree(bindSym"int", bindSym"int"))
         )
@@ -902,6 +903,8 @@ macro Mcmurry*(body: untyped): untyped =
                 error $NodeMatchingError[0], e
         node_reccase.add nnkElse.newTree(nnkRecList.newTree(newNilLit()))
         node_rec.add node_reccase
+    else:
+        node_rec.add newIdentDefs(ident"nodekind", ident(nodename & "Kind"))
 
     # Tree
     typsec.add nnkTypeDef.newTree(
