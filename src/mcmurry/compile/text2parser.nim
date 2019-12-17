@@ -141,6 +141,8 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                 var
                     res = parse_rules(e)
                 for e in res:
+                    if e == @[]:
+                        raise newException(ValueError, "The patter that allows empty is invalid.")
                     ret.add Rule(left: self.tokens[0].val, right: e)
             rules.add ret
         of ruleright:
@@ -189,6 +191,8 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                     tmp = @[@[], @[ann]]
                 for e in tmp:
                     for ee in res:
+                        if (e & ee) == @[]:
+                            raise newException(ValueError, "The patter that allows empty is invalid.")
                         ret.add Rule(left: ann, right: e & ee)
             var
                 ann = fmt"annon{nannon}"
@@ -313,6 +317,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         ind -= 1
         typsec.add lf
         typsec.ladd fmt"tree2String({treetypename}, {tokentypename}, {nodetypename})"
+        typsec.ladd fmt"node_utils({treetypename})"
 
     block NIMSEC:
         discard
@@ -360,7 +365,10 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         # lexerproc.add "var m: RegexMatch".indent(ind*4) & "\n"
         lexerproc.ladd fmt"if self.i >= self.programlen:{indent}return {treetypename}(kind: {tokentypename}, tokenkind: {tokenkindtypename}.EOF, val: ""$"", pos: self.pos)"
         for key, value in str_annons:
-            lexerproc.ladd fmt"elif self.program[self.i..^1].startsWith({key}):{indent}result = {treetypename}(kind: {tokentypename}, tokenkind: {tokenkindtypename}.ANNON{value}, val: {key}, pos: self.pos){lf}    self.pos[1] += {key.len-2}"
+            lexerproc.ladd fmt"elif self.program[self.i..^1].startsWith({key}):"
+            lexerproc.ladd fmt"{indent}result = {treetypename}(kind: {tokentypename}, tokenkind: {tokenkindtypename}.ANNON{value}, val: {key}, pos: self.pos)"
+            lexerproc.ladd fmt"{indent}self.pos[1] += {key.len-2}"
+            lexerproc.ladd fmt"{indent}self.i += {key.len-2}"
         for key, value in rstr_annons:
             lexerproc.ladd fmt"elif self.program.matchLen(reAnnon{value}, start=self.i) != -1:"
             ind += 1

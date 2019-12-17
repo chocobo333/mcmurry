@@ -43,9 +43,14 @@ template tree2String*(treename: untyped, tokenname, nodename: untyped) =
             return
         result = $nd.nodekind
         for ch in nd.children:
-            result &= ("\n" & "└---" & (if ch.kind==`tokenname`:`tokenname String`(ch)else: `nodename String`(ch, indent+1))).indent(4)
+            result &= ("\n" & "└── " & (if ch.kind==`tokenname`:`tokenname String`(ch)else: `nodename String`(ch, indent+1))).indent(4)
     proc `$`*(tr: `treename`): string =
         if tr.kind == tokenname:
             result = `tokenname String`(tr)
         elif tr.kind == nodename:
             result = `nodename String`(tr)
+
+template node_utils*(treename: untyped) =
+    proc simplify(self: `treename`): `treename` =
+        discard
+    
