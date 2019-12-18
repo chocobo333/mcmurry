@@ -491,12 +491,15 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                     ind += 1
                     parserproc.ladd "case t"
                     # shift and goto
+                    var
+                        expected: seq[string]
                     for edge in filter(dfa.edges, proc(self: Edge): bool = self[0] == i):
                         var
                             key = edge[2]
                             op = key.isUpper(true)
                         if op:
                             section innerof:
+                                expected.add key
                                 parserproc.ladd fmt"of ""{key}"":"
                                 ind += 1
                                 parserproc.ladd fmt"stack.add {edge[1]}"
@@ -518,6 +521,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                             continue
                         var
                             ofs = '"' & join(toSeq(item.la), "\", \"") & '"'
+                        expected.add toSeq(item.la)
                         section innerof:
                             parserproc.ladd fmt"of {ofs}:"
                             ind += 1
@@ -539,7 +543,13 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                     section elsesec:
                         parserproc.ladd "else:"
                         ind += 1
-                        parserproc.ladd "raiseSyntaxError(src, tk.pos, \"Unexpected token. : \" & $tk)"
+                        section varsec:
+                            var
+                                ofs = "\\\"" & join(expected, "\\\", \\\"") & "\\\""
+                            parserproc.ladd "var"
+                            ind += 1
+                            parserproc.ladd fmt"msg = ""Expected [{ofs}].\nbut got "" & $tk"
+                        parserproc.ladd "raiseSyntaxError(src, tk.pos, msg)"
             section elsesec:
                 parserproc.ladd "else:"
                 ind += 1

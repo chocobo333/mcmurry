@@ -8,6 +8,12 @@ import sequtils
 
 import utils
 
+const log {.booldefine.} = false
+
+template clog*(arg: untyped) =
+    when log:
+        stdout.write arg
+
 
 type
     Rule* = object
@@ -221,20 +227,20 @@ template rule_functions(rules: seq[Rule]) =
                 if key notin next_states:
                     next_states[key] = @[]
                 next_states[key].ad varitem
-            var j = 0
             for key in next_states.keys:
-                j += 1
                 var
                     n_state = next_states[key]
-                    b_cont: bool
                 if n_state in state_table:
                     self.edges.add (i, state_table[n_state], key)
                 else:
-                    state_table[n_state] = i + j
+                    var l = self.nodes.len
+                    state_table[n_state] = l
                     n_state.expansion()
-                    self.edges.add (i, self.nodes.len, key)
+                    self.edges.add (i, l, key)
                     self.nodes.add n_state
+            clog "Number of states: " & $i & "\r"
             i += 1
+        clog "\n"
 
         var
             key: string
