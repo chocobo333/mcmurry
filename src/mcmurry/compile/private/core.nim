@@ -207,6 +207,7 @@ template rule_functions(rules: seq[Rule]) =
         self.ad tmp
     
     proc expansion(self: var DFA) =
+        clog "Starting to make a dfa.\n"
         var
             i = 0
             state_table: Table[LRItemSet, int]
@@ -242,6 +243,12 @@ template rule_functions(rules: seq[Rule]) =
             i += 1
         clog "\n"
 
+        clog "Starting to make the LR table.\n"
+        when log:
+            var
+                log_i = 0
+                log_j = 0
+                
         var
             key: string
             op: LRop
@@ -250,6 +257,11 @@ template rule_functions(rules: seq[Rule]) =
             key = edge[2]
             op = LRop(op: if key.isUpper(true): SHIFT else: GOTO, val: edge[1])
             self.table[edge[0]][key] = op
+
+            clog "Connecting edge " & repeat('.', log_i mod 3) & repeat(' ', 3-(log_i mod 3)) & '\r'
+            when log:
+                log_i += 1
+
         for nn, node in self.nodes:
             for item in node:
                 if item.rule.right.len == item.index:
@@ -263,6 +275,12 @@ template rule_functions(rules: seq[Rule]) =
                                 if key in self.table[nn]:
                                         raise newException(ValueError, "not lr(1) for $1" % [item.rule.left])
                                 self.table[nn][key] = LRop(op: LRopenum.REDUCE, val: nr)
+
+                                clog "Sucking on candy " & repeat('.', log_j mod 3) & repeat(' ', 3-(log_j mod 3)) & '\r'
+                                when log:
+                                    log_j += 1
+        clog "\n"
+
 
 proc makeDFA*(rules: seq[Rule], toplevel: string): DFA =
     var

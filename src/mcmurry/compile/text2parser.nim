@@ -499,12 +499,25 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                             op = key.isUpper(true)
                         if op:
                             section innerof:
-                                expected.add key
                                 parserproc.ladd fmt"of ""{key}"":"
                                 ind += 1
                                 parserproc.ladd fmt"stack.add {edge[1]}"
                                 parserproc.ladd fmt"retstack.add tk"
                                 parserproc.ladd "break"
+
+                                # resolve ANNON token
+                                if key.startsWith("ANNON"):
+                                    var
+                                        n = parseInt(key[5..^1])
+                                    for ke, val in str_annons:
+                                        if val == n:
+                                            key = ke.escape()[1..^2]
+                                            break
+                                    for ke, val in rstr_annons:
+                                        if val == n:
+                                            key = ke.escape()[1..^2]
+                                            break
+                                expected.add key
                         else:
                             section innerof:
                                 parserproc.ladd fmt"of ""{key}"":"
@@ -545,7 +558,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                         ind += 1
                         section varsec:
                             var
-                                ofs = "\\\"" & join(expected, "\\\", \\\"") & "\\\""
+                                ofs = join(expected, ", ")
                             parserproc.ladd "var"
                             ind += 1
                             parserproc.ladd fmt"msg = ""Expected [{ofs}].\nbut got "" & $tk"
