@@ -7,116 +7,77 @@ import mcmurry/compile
 Mcmurry:
     %filename = parserf
     %parsername = Parser
-    %toplevel = module
+    %toplevel = expression
 
     %nodename = Node
-    %node = NIM:
-        integer:
-            intval: int
-    END
 
     %tokenname = Token
     %token = NIM:
         INT:
-            tk_intval: int
+            intval: int
     END
 
     %treename = Tree
 
-    module:
-        +statement
-    statement:
-        simple_stmt
-        compound_stmt
-        LF
-    simple_stmt:
-        small_stmt *(";" small_stmt)
-    small_stmt:
-        expr_stmt
-        "pass" -> pass_stmt
-        "break" -> break_stmt
-        "continue" -> continue_stmt
-    compound_stmt:
-        if_stmt
-        while_stmt
-        for_stmt
-        block_stmt
-    if_stmt:
-        "if" expression ":" suite *("elif" expression ":" suite) ["else" ":" suite]
-    while_stmt:
-        "while" expression ":" suite
-    for_stmt:
-        "for" expression "in" expression ":" suite
-    block_stmt:
-        "block" ident ":" suite
-    suite:
-        simple_stmt
-        INDENT +statement DEDENT
-    expr_stmt:
-        simple_expr
     expression:
         simple_expr
-        if_expr
+
     simple_expr:
         arrow_expr
     arrow_expr:
         assign_expr *(OP0 assign_expr)
     assign_expr:
-        plus_expr *(OP1 plus_expr)
+        late_expr *(OP1 late_expr)
+    late_expr:
+        or_expr *(OP2 or_expr)
+    or_expr:
+        and_expr *(OP3 and_expr)
+    and_expr:
+        cmp_expr *(OP4 cmp_expr)
+    cmp_expr:
+        plus_expr *(OP5 plus_expr)
     plus_expr:
+        mul_expr *(OP6 mul_expr)
+    mul_expr:
+        fast_expr *(OP7 fast_expr)
+    fast_expr:
         atom *(OP8 atom)
     atom:
         r"[a-zA-Z_][a-zA-z_0-9]*" -> ident
-        INT -> integer = NIM:
-            result.intval = parseInt(children[0].val)
-        END
-        STRING
-        "true" -> true
-        "false" -> false
+        INT -> integer
         "(" expression ")"
-    if_expr:
-        "if" expression ":" expression "else" ":" expression
 
     %nim = NIM:
         import strutils
-        var
-            nIndent: seq[int] = @[0]
     END
 
-    r"[\+\-\*\/\^\=\~\>]+" = NIM:
-        if str in ["+", "-"]:
-            OP8
-        elif str in ["==", "<=", ">=", "<", ">"]:
-            OP5
+    r"[$^*%\\/+\-~|&.=<>!@?]+" = NIM:
+        if str in ["=>", "->"]:
+            OP0
         elif str.endsWith("="):
             OP1
-        elif str == "=>" or str == "->":
-            OP0
+        elif str.startsWith("@") or str.startsWith("?"):
+            OP2
+        elif str in ["or", "xor"]:
+            OP3
+        elif str in ["and"]:
+            OP4
+        elif str in ["is", "isnot", "not", "in", "notin", "of"] or str.startsWith("=") or str.startsWith("<") or str.startsWith(">") or str.startsWith("!"):
+            OP5
+        elif str.startsWith("+") or str.startsWith("-") or str.startsWith("~") or str.startsWith("|"):
+            OP6
+        elif str in ["div", "mod", "shl", "shr"] or str.startsWith("*") or str.startsWith("/") or str.startsWith("\\") or str.startsWith("%"):
+            OP7
+        elif str.startsWith("$") or str.startsWith("^"):
+            OP8
         else:
-            OP10
+            OP9
     END
-    r"[a-zA-Z_][a-zA-z_0-9]*" = NAME
-    r"[1-9][0-9]*" = INT
-    r"("")[^""\\]*(\\.[^""\\]*)*("")" = STRING
-    r"\n?\s*##[^\n]*" = DOCSTR
-    r"\n?\s*#[^\n]*" = COMMENT
-    r"\n[ ]*" = NIM:
-        if len-1 > nIndent[^1]:
-            nIndent.add len-1
-            INDENT
-        elif len-1 < nIndent[^1]:
-            while len-1 != nIndent[^1]:
-                discard nIndent.pop()
-                kind_stack.add DEDENT
-                if nIndent.len == 0:
-                    raise newException(SyntaxError, "Invalid indent.")
-            discard kind_stack.pop()
-            DEDENT
-        else:
-            LF
+    r"[1-9][0-9]*" = NIM:
+        INT
     END
     r"\s+" = SPACE  
-    %ignore = SPACE / COMMENT
+    %ignore = SPACE
     
 import os
 

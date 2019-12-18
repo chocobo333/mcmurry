@@ -20,9 +20,6 @@ suite "mcmurry/compile":
     test "lexer":
         require true
 
-        for e in parser.lex("34 + 55\n 1+2\n3+3\n55\n"):
-            echo e
-
         var
-            ast = parser.parse("34 + 55")
-        echo ast
+            ast = parser.parse("1*2*3+4*5*6+7*8*9")
+        echo ast.simplify()
