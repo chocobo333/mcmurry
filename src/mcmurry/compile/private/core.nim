@@ -1,6 +1,7 @@
 
 import tables
 import sets
+import hashes
 
 import strutils
 import sequtils
@@ -118,6 +119,13 @@ proc `$`*(self: LRTable): string =
             result &= "$1|" % [center(s, l, ' ')]
         result &= '\n'
 
+proc hash*(self: LRItem): Hash =
+    result = self.index
+    # result = result !& hash(self.rule.left)
+    result = result !& hash(self.rule.right)
+    # result = result !& hash(self.la)
+    result = !$result
+    
 
 proc ad(self: var LRItemSet, val: LRItem) =
     for e in mitems(self):
@@ -195,11 +203,13 @@ template rule_functions(rules: seq[Rule]) =
     proc expansion(self: var DFA) =
         var
             i = 0
+            state_table: Table[LRItemSet, int]
         self.nodes[0].expansion()
         while i < self.nodes.len:
             var
                 cur_itemset = self.nodes[i]
                 next_states: Table[string, LRItemSet]
+            state_table[cur_itemset] = i
             for item in cur_itemset:
                 var
                     varitem = item
@@ -211,20 +221,19 @@ template rule_functions(rules: seq[Rule]) =
                 if key notin next_states:
                     next_states[key] = @[]
                 next_states[key].ad varitem
+            var j = 0
             for key in next_states.keys:
+                j += 1
                 var
                     n_state = next_states[key]
-                    b_cont = false
-                n_state.expansion()
-                for j, state in self.nodes:
-                    if state == n_state:
-                        b_cont = true
-                        self.edges.add (i, j, key)
-                        continue
-                if b_cont:
-                    continue
-                self.edges.add (i, self.nodes.len, key)
-                self.nodes.add n_state
+                    b_cont: bool
+                if n_state in state_table:
+                    self.edges.add (i, state_table[n_state], key)
+                else:
+                    state_table[n_state] = i + j
+                    n_state.expansion()
+                    self.edges.add (i, self.nodes.len, key)
+                    self.nodes.add n_state
             i += 1
 
         var

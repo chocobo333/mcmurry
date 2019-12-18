@@ -12,6 +12,10 @@ var
     parser = Parser()
 
 suite "mcmurry/compile":
+    setup:
+        echo "===== Starting tests. ====="
+    teardown:
+        echo "===== Finished tests. ====="
     test "Import created source file":
         require true
         check existsFile("parserf.nim")

@@ -82,6 +82,10 @@ Mcmurry:
 import os
 
 suite "mcmurry/compile":
+    setup:
+        echo "===== Starting tests. ====="
+    teardown:
+        echo "===== Finished tests. ====="
     test "Create source file":
         require true
         check existsFile("parserf.nim")
