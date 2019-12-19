@@ -186,6 +186,4 @@ macro Visitor*(tree: typedesc[Tree], visitorname: untyped, visitfuncs: untyped):
                 proc `funcname`(`self`: `tree`) =
                     `funcstmt`
                 `funcname`
-
-    echo treeRepr result
-    echo repr result
+                

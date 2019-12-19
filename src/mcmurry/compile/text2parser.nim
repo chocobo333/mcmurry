@@ -62,7 +62,16 @@ template section(name: untyped, body: untyped) =
             ind = pind
         body
     
-
+template secblock(sec: untyped, title: string, body: untyped) =
+    sec.ladd title
+    block:
+        let
+            pind = ind
+        defer:
+            ind = pind
+            sec.ladd ""
+        ind += 1
+        body
 
 proc compile_parser*(src: string, classname: openArray[string], typsec: string) =
     type
@@ -93,6 +102,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         nimsec: string
         resec: string
         lexerproc: string
+        tmp: string
         parserproc: string
 
     block LICENCE:
@@ -458,6 +468,43 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         ind -= 1
         ind -= 1
 
+    section TEMPLATE:
+        tmp.ladd lf
+        tmp.secblock "template shift(sh: int) =":
+            tmp.ladd "stack.add sh"
+            tmp.ladd "retstack.add tk"
+            tmp.ladd "break"
+
+        tmp.secblock "template goto(gt: int) =":
+            tmp.ladd "stack.add gt"
+            tmp.ladd "t = tmpt"
+
+        tmp.secblock "template reduce(rd: seq[bool], nk: untyped) =":
+            tmp.ladd fmt"result = Tree(kind: {nodetypename}, nodekind: {nodekindtypename}.nk)"
+            tmp.secblock "for e in rd:":
+                tmp.secblock "if e:":
+                    tmp.ladd "discard stack.pop()"
+                    tmp.ladd "result.children.insert retstack.pop.children, 0"
+                tmp.secblock "else:":
+                    tmp.ladd "discard stack.pop()"
+                    tmp.ladd "result.children.insert retstack.pop, 0"
+            tmp.ladd "retstack.add result"
+            tmp.ladd "tmpt = t"
+            tmp.ladd fmt"t = ${nodekindtypename}.nk"
+        
+        tmp.secblock "template reduce_annon(rd: seq[bool], nk: untyped) =":
+            tmp.ladd fmt"result = Tree(kind: {nodetypename})"
+            tmp.secblock "for e in rd:":
+                tmp.secblock "if e:":
+                    tmp.ladd "discard stack.pop()"
+                    tmp.ladd "result.children.insert retstack.pop.children, 0"
+                tmp.secblock "else:":
+                    tmp.ladd "discard stack.pop()"
+                    tmp.ladd "result.children.insert retstack.pop, 0"
+            tmp.ladd "retstack.add result"
+            tmp.ladd "tmpt = t"
+            tmp.ladd fmt"t = astToStr(nk)"
+
     block PARSERPROC:
         defer:
             parserproc.add lf
@@ -501,9 +548,10 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                             section innerof:
                                 parserproc.ladd fmt"of ""{key}"":"
                                 ind += 1
-                                parserproc.ladd fmt"stack.add {edge[1]}"
-                                parserproc.ladd fmt"retstack.add tk"
-                                parserproc.ladd "break"
+                                # parserproc.ladd fmt"stack.add {edge[1]}"
+                                # parserproc.ladd fmt"retstack.add tk"
+                                # parserproc.ladd "break"
+                                parserproc.ladd fmt"shift({edge[1]})"
 
                                 # resolve ANNON token
                                 if key.startsWith("ANNON"):
@@ -522,8 +570,9 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                             section innerof:
                                 parserproc.ladd fmt"of ""{key}"":"
                                 ind += 1
-                                parserproc.ladd fmt"stack.add {edge[1]}"
-                                parserproc.ladd fmt"t = tmpt"
+                                # parserproc.ladd fmt"stack.add {edge[1]}"
+                                # parserproc.ladd fmt"t = tmpt"
+                                parserproc.ladd fmt"goto({edge[1]})"
                     # reduce                   
                     for item in filter(node, proc(self: LRItem): bool = self.rule.right.len == self.index):
                         if item.rule.left == top:
@@ -550,23 +599,35 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                                         break
                             expected.add key
                         section innerof:
-                            parserproc.ladd fmt"of {ofs}:"
-                            ind += 1
-                            if item.rule.left.startsWith("annon"):
-                                parserproc.ladd fmt"result = {treetypename}(kind: {nodetypename})"
-                            else:
-                                parserproc.ladd fmt"result = {treetypename}(kind: {nodetypename}, nodekind: {nodekindtypename}.{item.rule.left})"
+                            var
+                                annsec: seq[bool]
                             for i in countdown(item.rule.right.len-1, 0):
                                 var
                                     e = item.rule.right[i]
-                                parserproc.ladd "discard stack.pop()"
                                 if e.startsWith("annon"):
-                                    parserproc.ladd "result.children.insert retstack.pop.children, 0"
+                                    annsec.add true
                                 else:
-                                    parserproc.ladd "result.children.insert retstack.pop, 0"
-                            parserproc.ladd "retstack.add result"
-                            parserproc.ladd "tmpt = t"
-                            parserproc.ladd fmt"t = ""{item.rule.left}"""
+                                    annsec.add false
+                            parserproc.ladd fmt"of {ofs}:"
+                            ind += 1
+                            if item.rule.left.startsWith("annon"):
+                                # parserproc.ladd fmt"result = {treetypename}(kind: {nodetypename})"
+                                parserproc.ladd fmt"reduce_annon({annsec}, {item.rule.left})"
+                            else:
+                                # parserproc.ladd fmt"result = {treetypename}(kind: {nodetypename}, nodekind: {nodekindtypename}.{item.rule.left})"
+                                parserproc.ladd fmt"reduce({annsec}, {item.rule.left})"
+                            
+                            # for i in countdown(item.rule.right.len-1, 0):
+                            #     var
+                            #         e = item.rule.right[i]
+                            #     parserproc.ladd "discard stack.pop()"
+                            #     if e.startsWith("annon"):
+                            #         parserproc.ladd "result.children.insert retstack.pop.children, 0"
+                            #     else:
+                            #         parserproc.ladd "result.children.insert retstack.pop, 0"
+                            # parserproc.ladd "retstack.add result"
+                            # parserproc.ladd "tmpt = t"
+                            # parserproc.ladd fmt"t = ""{item.rule.left}"""
                     section elsesec:
                         parserproc.ladd "else:"
                         ind += 1
@@ -590,6 +651,7 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         ret.add nimsec          # add nim section
         ret.add resec           # add regex section
         ret.add lexerproc       # add lexer section
+        ret.add tmp             # add tmplate section
         ret.add parserproc      # add parser section
 
     block OUTPUT:
