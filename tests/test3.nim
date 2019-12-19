@@ -29,5 +29,11 @@ suite "mcmurry/compile":
         echo ast.simplify()
     
     test "vistor":
-        Tree.Visitor(visitor):
-            discard
+
+        Tree.Visitor(visit):
+            proc INT(self: Tree) =
+                echo self
+
+        var
+            ast = parser.parse("1*2*3+4*5*6+7*8*9").simplify()
+        ast.visit()

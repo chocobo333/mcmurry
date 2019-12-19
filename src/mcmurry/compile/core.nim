@@ -1,9 +1,13 @@
 
 import strutils
+import sequtils
 import strformat
 
 import macros
 import ast_pattern_matching
+
+import private/utils
+export utils
 
 type
     SyntaxError* = object of Exception
@@ -54,6 +58,11 @@ template tree2String*(treename: untyped, tokenname, nodename: untyped) =
             result = `nodename String`(tr)
 
 template node_utils*(treename: untyped, tokenname, nodename: untyped) =
+    proc getKind*(self: `treename`): string =
+        if self.kind == tokenname:
+            result = $self.tokenkind
+        elif self.kind == nodename:
+            result = $self.nodekind
     proc simplify*(self: `treename`): `treename` =
         ##[
             Simplify tree node.
@@ -78,9 +87,105 @@ type
 
     Tree = concept t
         t.kind is enum
+        t.getKind is string
 
 
 macro Visitor*(tree: typedesc[Tree], visitorname: untyped, visitfuncs: untyped): untyped =
     var
         treedef = tree.getImpl()
-    echo treeRepr(treedef)
+        treekinds: seq[string]
+        kinds: seq[NimNode]
+
+    # check varidation of `tree` and get kind of node and token
+    try:
+        treedef[2][0][2][0][0][1].matchAst(MatchingErrors):
+        of `sym`@nnkSym:
+            var
+                treekind = sym.getImpl()[2]
+            for i in 1..<treekind.len:
+                treekinds.add treekind[i].strVal & "Kind"
+        else:
+            error fmt"{tree} is invalid type.", visitorname
+    except:
+        error fmt"{tree} is invalid type.", visitorname
+
+    treedef[2][0][2][0].matchAstRecursive:
+    of `name`@nnkSym:
+        if name.strVal in treekinds:
+            var
+                kindenum = name.getImpl()[2]
+            for i in 1..<kindenum.len:
+                kinds.add kindenum[i]
+
+    
+    # Definition of procs
+    result = newStmtList()
+    var
+        funcname = genSym(nskProc, "p")
+        self = genSym(nskParam, "self")
+        kind = genSym(nskLet, "kind")
+        funcstmt = newStmtList()
+        casestmt = nnkCaseStmt.newTree(kind)
+        elsestmt = nnkElse.newNimNode()
+        b_default: bool = false
+        default = ident"default"
+
+    funcstmt.add quote do:
+        let
+            `kind` = `self`.getKind()
+
+    visitfuncs.expectKind(nnkStmtList)
+    for e in visitfuncs:
+        e.matchAst(MatchingErrors):
+        of `procname`@nnkProcDef:
+            let
+                name = procname.name
+            if name in kinds:
+                casestmt.add nnkOfBranch.newTree(
+                    newLit(name.strVal),
+                    newStmtList(
+                        newCall(name, self)
+                    )
+                )
+            elif name.strVal == "default":
+                b_default = true
+        else:
+            error $MatchingErrors, e
+    if not b_default:
+        visitfuncs.add quote do:
+            proc `default`(`self`: `tree`) =
+                discard
+    casestmt.add nnkElse.newTree quote do:
+        `default`(`self`)
+    funcstmt.add casestmt
+    # funcstmt.add quote do:
+    #     if not `kind`.isUpperAscii(true):
+    #         for e in `self`.children:
+    #             `funcname`(e)
+    funcstmt.add nnkIfStmt.newTree(
+        nnkElifBranch.newTree(
+            prefix(newCall(newDotExpr(kind, bindSym"isUpper"), bindSym"true"), "not"),
+            newStmtList(
+                nnkForStmt.newTree(
+                    ident"e",
+                    newDotExpr(self, ident"children"),
+                    newStmtList(
+                        newCall(funcname, ident"e")
+                    )
+                )
+            )
+        )
+    )
+
+    
+    # Generate codes
+    result.add quote do:
+        let
+            `visitorname`: proc(`self`: `tree`) = block:
+                `visitfuncs`
+                proc `funcname`(`self`: `tree`) =
+                    `funcstmt`
+                `funcname`
+
+    echo treeRepr result
+    echo repr result
