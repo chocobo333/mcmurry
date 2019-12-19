@@ -27,3 +27,7 @@ suite "mcmurry/compile":
         var
             ast = parser.parse("1*2*3+4*5*6+7*8*9")
         echo ast.simplify()
+    
+    test "vistor":
+        Tree.Visitor(visitor):
+            discard

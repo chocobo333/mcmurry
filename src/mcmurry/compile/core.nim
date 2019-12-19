@@ -76,6 +76,11 @@ type
         p.programlen is int
         p.pos is (int, int)
 
+    Tree = concept t
+        t.kind is enum
 
-macro Visitor*(parser: typedesc[Parser], visitorname: untyped, visitfuncs: untyped): untyped =
-    return newCall("echo", parser)
+
+macro Visitor*(tree: typedesc[Tree], visitorname: untyped, visitfuncs: untyped): untyped =
+    var
+        treedef = tree.getImpl()
+    echo treeRepr(treedef)

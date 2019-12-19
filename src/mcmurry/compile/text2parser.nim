@@ -885,10 +885,10 @@ macro Mcmurry*(body: untyped): untyped =
     # Token
     var
         token_rec = nnkRecList.newTree(
-            newIdentDefs(ident"val", bindSym"string"),
-            newIdentDefs(ident"pos", nnkPar.newTree(bindSym"int", bindSym"int"))
+            newIdentDefs(postfix(ident"val", "*"), bindSym"string"),
+            newIdentDefs(postfix(ident"pos", "*"), nnkPar.newTree(bindSym"int", bindSym"int"))
         )
-        token_reccase = nnkRecCase.newTree(newIdentDefs(ident"tokenkind", ident(tokenname & "Kind")))
+        token_reccase = nnkRecCase.newTree(newIdentDefs(postfix(ident"tokenkind", "*"), ident(tokenname & "Kind")))
     if not tokentype.isNil:
         for e in tokentype:
             e.matchAst(TokenMatchingError):
@@ -905,7 +905,7 @@ macro Mcmurry*(body: untyped): untyped =
                 for ee in statement:
                     ee.matchAst(MatchingError):
                     of nnkCall(`field`@nnkIdent, nnkStmtList(`typ`@nnkIdent)):
-                        token_inner_rec.add newIdentDefs(field, typ)
+                        token_inner_rec.add newIdentDefs(postfix(field, "*"), typ)
                     else:
                         error $MatchingError[0], e
                 token_of_branch.add token_inner_rec
@@ -915,13 +915,13 @@ macro Mcmurry*(body: untyped): untyped =
         token_reccase.add nnkElse.newTree(nnkRecList.newTree(newNilLit()))
         token_rec.add token_reccase
     else:
-        token_rec.add newIdentDefs(ident"tokenkind", ident(tokenname & "Kind"))
+        token_rec.add newIdentDefs(postfix(ident"tokenkind", "*"), ident(tokenname & "Kind"))
 
 
     # Node
     var
         node_rec = nnkRecList.newTree(
-            newIdentDefs(ident"children", nnkBracketExpr.newTree(bindSym"seq", ident(treename)))
+            newIdentDefs(postfix(ident"children", "*"), nnkBracketExpr.newTree(bindSym"seq", ident(treename)))
             # newIdentDefs(ident"pos", nnkPar.newTree(bindSym"int", bindSym"int"))
         )
         node_reccase = nnkRecCase.newTree(newIdentDefs(ident"nodekind", ident(nodename & "Kind")))
@@ -941,7 +941,7 @@ macro Mcmurry*(body: untyped): untyped =
                 for ee in statement:
                     ee.matchAst(MatchingError):
                     of nnkCall(`field`@nnkIdent, nnkStmtList(`typ`@nnkIdent)):
-                        node_inner_rec.add newIdentDefs(field, typ)
+                        node_inner_rec.add newIdentDefs(postfix(field, "*"), typ)
                     else:
                         error $MatchingError[0], e
                 node_of_branch.add node_inner_rec
@@ -951,7 +951,7 @@ macro Mcmurry*(body: untyped): untyped =
         node_reccase.add nnkElse.newTree(nnkRecList.newTree(newNilLit()))
         node_rec.add node_reccase
     else:
-        node_rec.add newIdentDefs(ident"nodekind", ident(nodename & "Kind"))
+        node_rec.add newIdentDefs(postfix(ident"nodekind", "*"), ident(nodename & "Kind"))
 
     # Tree
     typsec.add nnkTypeDef.newTree(
@@ -963,7 +963,7 @@ macro Mcmurry*(body: untyped): untyped =
                 newEmptyNode(),
                 nnkRecList.newTree(
                     nnkRecCase.newTree(
-                        newIdentDefs(ident"kind", ident(treename & "Kind")),
+                        newIdentDefs(postfix(ident"kind", "*"), ident(treename & "Kind")),
                         nnkOfBranch.newTree(
                             ident(tokenname),
                             token_rec
