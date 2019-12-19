@@ -2,6 +2,9 @@
 import strutils
 import strformat
 
+import macros
+import ast_pattern_matching
+
 type
     SyntaxError* = object of Exception
     TokenError* = object of Exception
@@ -65,4 +68,14 @@ template node_utils*(treename: untyped, tokenname, nodename: untyped) =
             return self.children[0]
         else:
             return self
-    
+
+type
+    Parser = concept p
+        p.i is int
+        p.program is string
+        p.programlen is int
+        p.pos is (int, int)
+
+
+macro Visitor*(parser: typedesc[Parser], visitorname: untyped, visitfuncs: untyped): untyped =
+    return newCall("echo", parser)

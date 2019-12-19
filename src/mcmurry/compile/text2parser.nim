@@ -80,8 +80,8 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
         treetypename = classname[3]
         treekindtypename = treetypename & "Kind"
 
-        imports = ["mcmurry/compile/importance", "re", "strutils", "sequtils"]
-        exports = ["SyntaxError", "TokenError", "raiseTokenError", "raiseSyntaxError"]
+        imports = ["mcmurry/compile/core", "re", "strutils", "sequtils"]
+        exports = ["core"]
 
     var
         ret: seq[string]
@@ -307,13 +307,13 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
             ind = 0
         typsec &= "\ntype\n"
         ind = 1
-        typsec.add "$1* = ref object".indent(ind*4) % [parsertypename] & "\n"
-        ind += 1
-        typsec.ladd "i: int"
-        typsec.ladd "program: string"
-        typsec.ladd "programlen: int"
-        typsec.ladd "pos: (int, int)"
-        ind -= 1
+        section parserdef:
+            typsec.ladd fmt"{parsertypename}* = ref object"
+            ind += 1
+            typsec.ladd "i*: int"
+            typsec.ladd "program: string"
+            typsec.ladd "programlen*: int"
+            typsec.ladd "pos*: (int, int)"
         ind -= 1
         typsec.add lf
         typsec.ladd fmt"tree2String({treetypename}, {tokentypename}, {nodetypename})"
@@ -534,7 +534,21 @@ proc compile_parser*(src: string, classname: openArray[string], typsec: string) 
                             continue
                         var
                             ofs = '"' & join(toSeq(item.la), "\", \"") & '"'
-                        expected.add toSeq(item.la)
+                        for e in item.la:
+                            var key = e
+                            # resolve ANNON token
+                            if key.startsWith("ANNON"):
+                                var
+                                    n = parseInt(key[5..^1])
+                                for ke, val in str_annons:
+                                    if val == n:
+                                        key = ke.escape()[1..^2]
+                                        break
+                                for ke, val in rstr_annons:
+                                    if val == n:
+                                        key = ke.escape()[1..^2]
+                                        break
+                            expected.add key
                         section innerof:
                             parserproc.ladd fmt"of {ofs}:"
                             ind += 1
@@ -639,7 +653,7 @@ macro Mcmurry*(body: untyped): untyped =
             if b_nimcode:
                 error "`END` marker is needed.", directive
             if directive.strVal notin directives:
-                error "Allowed directives only are $1" % [$directives], directive
+                error fmt"Allowed directives only are {directives}", directive
             # NIMCODE
             if directive.strVal in directives_allow_nim_code:
                 # parsing NIMCODE
