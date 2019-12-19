@@ -171,14 +171,18 @@ template rule_functions(rules: seq[Rule]) =
                             if f notin rett[e]:
                                 rett[e].incl f
                 return rett[e]
-
-    proc ref_rule(rulename: string, la: HashSet[string]): LRItemSet =
+    
+    proc ref_rule(item: LRItem): LRItemSet =
         var
-            rett {.global.}: Table[string, Table[HashSet[string], LRItemSet]]
+            rett {.global.}: Table[LRItem, LRItemSet]
             rettmp: LRItemSet
-        if rulename in rett and la in rett[rulename]:
-            result = rett[rulename][la]
+
+        if item in rett:
+            result = rett[item]
         else:
+            var
+                la = if item.index + 1 < item.rule.right.len: first(item.rule.right[item.index+1]) else: item.la
+                rulename = item.rule.right[item.index]
             for rule in rules:
                 if rule.left == rulename:
                     rettmp.add LRItem(rule: rule, la: la)
@@ -192,18 +196,14 @@ template rule_functions(rules: seq[Rule]) =
                 if e.rule.right[0] == rulename:
                     continue
                 if not e.rule.right[0].isUpper(true):
-                    result.ad ref_rule(e.rule.right[0], if e.rule.right.len == 1: e.la else: first(e.rule.right[1]))
-            rett[rulename] = initTable[HashSet[string], LRItemSet]()
-            rett[rulename][la] = result
+                    result.ad ref_rule(e)
+            rett[item] = result
 
     proc expansion(self: var LRItemSet) =
         var
             tmp: LRItemSet
-        for e in self:
-            if e.index < e.rule.right.len:
-                var
-                    la = if e.index + 1 < e.rule.right.len: first(e.rule.right[e.index+1]) else: e.la
-                tmp.ad ref_rule(e.rule.right[e.index], la)
+        for e in filter(self, proc(self:auto):bool=self.index < self.rule.right.len):
+            tmp.ad ref_rule(e)
         self.ad tmp
     
     proc expansion(self: var DFA) =
@@ -289,7 +289,7 @@ proc makeDFA*(rules: seq[Rule], toplevel: string): DFA =
         raise newException(ValueError, "There is not a rule of toplevel.")
     rule_functions(rules)
     discard first($toplevel)
-    discard ref_rule($toplevel, toHashSet([eof]))
+    discard ref_rule(LRItem(rule: Rule(left: top, right: @[$toplevel]), la: toHashSet([eof])))
 
     # initialize DFA
     result.nodes.add @[LRItem(rule: Rule(left: top, right: @[$toplevel]), la: toHashSet([eof]))]
