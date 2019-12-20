@@ -143,9 +143,8 @@ macro Visitor*(tree: typedesc[Tree], visitorname: untyped, visitfuncs: untyped):
             if name in kinds:
                 casestmt.add nnkOfBranch.newTree(
                     newLit(name.strVal),
-                    newStmtList(
-                        newCall(name, self)
-                    )
+                    quote do:
+                        `name`(`self`)
                 )
             elif name.strVal == "default":
                 b_default = true
@@ -165,15 +164,9 @@ macro Visitor*(tree: typedesc[Tree], visitorname: untyped, visitfuncs: untyped):
     funcstmt.add nnkIfStmt.newTree(
         nnkElifBranch.newTree(
             prefix(newCall(newDotExpr(kind, bindSym"isUpper"), bindSym"true"), "not"),
-            newStmtList(
-                nnkForStmt.newTree(
-                    ident"e",
-                    newDotExpr(self, ident"children"),
-                    newStmtList(
-                        newCall(funcname, ident"e")
-                    )
-                )
-            )
+            quote do:
+                for e in `self`.children:
+                    `funcname`(e)
         )
     )
 
@@ -187,3 +180,90 @@ macro Visitor*(tree: typedesc[Tree], visitorname: untyped, visitfuncs: untyped):
                     `funcstmt`
                 `funcname`
                 
+macro Transformer*(tree: typedesc[Tree], visitorname: untyped, visitfuncs: untyped): untyped =
+    var
+        treedef = tree.getImpl()
+        treekinds: seq[string]
+        kinds: seq[NimNode]
+
+    # check varidation of `tree` and get kind of node and token
+    try:
+        treedef[2][0][2][0][0][1].matchAst(MatchingErrors):
+        of `sym`@nnkSym:
+            var
+                treekind = sym.getImpl()[2]
+            for i in 1..<treekind.len:
+                treekinds.add treekind[i].strVal & "Kind"
+        else:
+            error fmt"{tree} is invalid type.", visitorname
+    except:
+        error fmt"{tree} is invalid type.", visitorname
+
+    treedef[2][0][2][0].matchAstRecursive:
+    of `name`@nnkSym:
+        if name.strVal in treekinds:
+            var
+                kindenum = name.getImpl()[2]
+            for i in 1..<kindenum.len:
+                kinds.add kindenum[i]
+
+    
+    # Definition of procs
+    result = newStmtList()
+    var
+        funcname = genSym(nskProc, "p")
+        self = genSym(nskParam, "self")
+        kind = genSym(nskLet, "kind")
+        funcstmt = newStmtList()
+        casestmt = nnkCaseStmt.newTree(kind)
+        elsestmt = nnkElse.newNimNode()
+        b_default: bool = false
+        default = ident"default"
+
+    funcstmt.add quote do:
+        let
+            `kind` = `self`.getKind()
+
+    visitfuncs.expectKind(nnkStmtList)
+    for e in visitfuncs:
+        e.matchAst(MatchingErrors):
+        of `procname`@nnkProcDef:
+            let
+                name = procname.name
+            if name in kinds:
+                casestmt.add nnkOfBranch.newTree(
+                    newLit(name.strVal),
+                    quote do:
+                        result = `name`(`self`)
+                )
+            elif name.strVal == "default":
+                b_default = true
+        else:
+            error $MatchingErrors, e
+    if b_default:
+        casestmt.add nnkElse.newTree quote do:
+            result = `default`(`self`)
+    else:
+        casestmt.add nnkElse.newTree quote do:
+            result = `self`            
+    funcstmt.add nnkIfStmt.newTree(
+        nnkElifBranch.newTree(
+            prefix(newCall(newDotExpr(kind, bindSym"isUpper"), bindSym"true"), "not"),
+            newStmtList(
+                quote do:
+                    for i, e in `self`.children:
+                        `self`.children[i] = `funcname`(e)
+            )
+        )
+    )
+    funcstmt.add casestmt
+
+
+    # Generate codes
+    result.add quote do:
+        let
+            `visitorname`: proc(`self`: `tree`): `tree` = block:
+                `visitfuncs`
+                proc `funcname`(`self`: `tree`): `tree` =
+                    `funcstmt`
+                `funcname`
