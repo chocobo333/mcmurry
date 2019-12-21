@@ -273,7 +273,22 @@ template rule_functions(rules: seq[Rule]) =
                             for key in item.la:
                                 # if there is shift/reduce conflict, raise error
                                 if key in self.table[nn]:
-                                        raise newException(ValueError, "not lr(1) for $1" % [item.rule.left])
+                                    var
+                                        le: string
+                                        op = self.table[nn][key]
+                                    if  op.op == LRopenum.REDUCE:
+                                        le = rules[op.val].left
+                                        raise newException(ValueError, "conflict occurred between `$1` and `$2` with `$3`" % [item.rule.left, le, key])
+                                    elif op.op == LRopenum.SHIFT:
+                                        le = "shift"
+                                        clog "shift/reduce confilict occurred.\n"
+                                        raise newException(ValueError, "conflict occurred between `$1` and `$2` with `$3`" % [item.rule.left, le, key])
+
+                                        # for e in self.nodes[op.val]:
+                                        #     if e.rule.right.len <= e.index-1:
+                                        #         continue
+                                        #     if e.rule.right[e.index-1] == key:
+                                        #         le = e.rule.left
                                 self.table[nn][key] = LRop(op: LRopenum.REDUCE, val: nr)
 
                                 clog "Sucking on candy " & repeat('.', log_j mod 3) & repeat(' ', 3-(log_j mod 3)) & '\r'
