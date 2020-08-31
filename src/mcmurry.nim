@@ -127,6 +127,9 @@ import mcmurry/manipulating_node
 export ebnf2parser
 export manipulating_node
 
+import mcmurry2/ebnf2parser as e2p
+export e2p
+
 #[
     TODO: improve custom errors
 ]#

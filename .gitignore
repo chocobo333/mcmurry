@@ -11,3 +11,5 @@ nimcache/
 output.*
 parser.nim
 parserf.nim
+
+./test.*
